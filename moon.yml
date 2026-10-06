@@ -1,0 +1,13 @@
+$schema: './.moon/cache/schemas/project.json'
+
+# Repo-wide lint and format (Oxc: oxlint + oxfmt, which also covers md, yaml and css).
+# Solidity is formatted by contracts:lint (forge fmt).
+tasks:
+  lint:
+    script: 'oxlint --type-aware --deny-warnings && oxfmt --check'
+    options:
+      cache: false
+  format:
+    script: 'oxfmt && oxlint --type-aware --fix'
+    options:
+      cache: false

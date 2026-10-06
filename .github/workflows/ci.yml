@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: moonrepo/setup-toolchain@v0
+        with:
+          auto-install: true
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
+
+      - run: pnpm install --frozen-lockfile
+
+      # Lint, typecheck, contract tests and sdk tests for whatever changed since main.
+      - run: pnpm exec moon ci
+
+      # Generated ABIs must match the contracts they came from.
+      - run: pnpm exec moon run sdk:generate && git diff --exit-code packages/sdk/src/generated

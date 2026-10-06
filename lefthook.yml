@@ -1,0 +1,20 @@
+pre-commit:
+  piped: true
+  jobs:
+    - name: oxfmt
+      glob: '*.{js,mjs,cjs,ts,mts,cts,tsx,jsx,json,jsonc,css,md,yml,yaml}'
+      run: pnpm exec oxfmt --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
+    - name: oxlint
+      glob: '*.{js,mjs,cjs,ts,mts,cts,tsx,jsx}'
+      run: pnpm exec oxlint --fix {staged_files}
+      stage_fixed: true
+    - name: forge-fmt
+      glob: 'contracts/{src,test,script}/**/*.sol'
+      run: forge fmt --root contracts {staged_files}
+      stage_fixed: true
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: pnpm exec moon run :typecheck

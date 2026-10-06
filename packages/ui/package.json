@@ -1,0 +1,12 @@
+{
+  "name": "@holdsake/ui",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./styles.css": "./src/styles.css",
+    "./fonts.css": "./src/fonts.css"
+  },
+  "dependencies": {
+    "tailwindcss": "4.3.3"
+  }
+}
