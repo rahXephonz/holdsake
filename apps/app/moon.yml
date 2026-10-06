@@ -15,8 +15,4 @@ tasks:
     outputs: ['.output']
   typecheck:
     command: 'tsc --noEmit'
-    deps: ['sdk:generate', 'generate-routes']
-  generate-routes:
-    command: 'tsr generate'
-    inputs: ['src/routes/**/*', 'tsr.config.json']
-    outputs: ['src/routeTree.gen.ts']
+    deps: ['sdk:generate']
