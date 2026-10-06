@@ -25,7 +25,9 @@ tasks:
     command: 'forge fmt --check'
   verify:
     # "Verify first" checks against a Robinhood Chain fork. Needs ROBINHOOD_RPC_URL; spends nothing.
-    command: 'forge test --match-path "test/verify/*" --fork-url $ROBINHOOD_RPC_URL -vv'
+    # prague so vm.signAndAttachDelegation (EIP-7702) works; the chain's ArbOS 61 supports it.
+    # The rate-limit flags keep a free-tier RPC from returning 429s mid-run.
+    command: 'forge test --match-path "test/verify/*" --evm-version prague --fork-url $ROBINHOOD_RPC_URL --compute-units-per-second 50 --fork-retries 10 --fork-retry-backoff 2000 -vv'
     deps: ['build']
     options:
       cache: false

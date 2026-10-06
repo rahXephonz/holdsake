@@ -25,7 +25,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         title: 'Holdsake',
       },
-      // Light only: stops browsers and the Telegram webview from darkening controls.
+      // Light only: stops browsers from darkening controls.
       {
         name: 'color-scheme',
         content: 'light',

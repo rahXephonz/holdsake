@@ -6,6 +6,12 @@ checksum = "3dd38f17610dba4602bd008ee2cb551e51e97d7b4ce04e1ffdf853da832942fa"
 integrity = "4eb0ef219d10ab5a5708adaae1132dc0a93ab6a193378486e842d606c989ff3e"
 
 [[dependencies]]
+name = "account-abstraction"
+version = "0.8.0"
+git = "https://github.com/eth-infinitism/account-abstraction.git"
+rev = "4cbc06072cdc19fd60f285c5997f4f7f57a588de"
+
+[[dependencies]]
 name = "forge-std"
 version = "1.17.0"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_17_0_01-10-2026_10:59:49_forge-std-1.17.zip"
