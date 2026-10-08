@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "singleQuote": true,
+  "semi": false,
+  "trailingComma": "all",
+  "proseWrap": "preserve",
+  "sortPackageJson": false,
+  "sortTailwindcss": {
+    "stylesheet": "./apps/app/src/styles.css",
+    "functions": ["cn", "cva"]
+  },
+  "ignorePatterns": [
+    "pnpm-lock.yaml",
+    "**/routeTree.gen.ts",
+    "packages/sdk/src/generated",
+    "contracts/dependencies",
+    "contracts/out",
+    "contracts/cache",
+    ".moon/cache"
+  ]
+}

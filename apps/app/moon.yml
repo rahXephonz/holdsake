@@ -1,0 +1,22 @@
+$schema: '../../.moon/cache/schemas/project.json'
+
+tags: ['app']
+dependsOn: ['sdk', 'ui']
+
+tasks:
+  dev:
+    command: 'vite dev --port 4321'
+    deps: ['sdk:generate']
+    preset: 'server'
+  build:
+    command: 'vite build'
+    deps: ['sdk:generate']
+    inputs: ['src/**/*', 'public/**/*', 'vite.config.ts', 'tsconfig.json', 'package.json']
+    outputs: ['.output']
+  typecheck:
+    command: 'tsc --noEmit'
+    deps: ['sdk:generate', 'generate-routes']
+  generate-routes:
+    command: 'tsr generate'
+    inputs: ['src/routes/**/*', 'tsr.config.json']
+    outputs: ['src/routeTree.gen.ts']

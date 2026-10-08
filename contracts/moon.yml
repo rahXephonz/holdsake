@@ -1,0 +1,37 @@
+$schema: '../.moon/cache/schemas/project.json'
+
+tags: ['contracts']
+
+# Runs the system Foundry (pinned with foundryup, see AGENT.md). Deploys are never tasks here.
+tasks:
+  install:
+    command: 'forge soldeer install'
+    inputs: ['foundry.toml']
+    outputs: ['dependencies']
+  build:
+    command: 'forge build'
+    deps: ['install']
+    inputs: ['src/**/*', 'test/**/*', 'script/**/*', 'foundry.toml', 'remappings.txt']
+    outputs: ['out']
+  test:
+    command: 'forge test --no-match-path "test/verify/*"'
+    deps: ['build']
+  gas:
+    command: 'forge test --gas-report --no-match-path "test/verify/*"'
+    deps: ['build']
+    options:
+      cache: false
+  lint:
+    command: 'forge fmt --check'
+  verify:
+    # "Verify first" checks against a Robinhood Chain fork. Needs ROBINHOOD_RPC_URL; spends nothing.
+    command: 'forge test --match-path "test/verify/*" --fork-url $ROBINHOOD_RPC_URL -vv'
+    deps: ['build']
+    options:
+      cache: false
+      envFile: '/apps/app/.env'
+  fork:
+    command: 'anvil --fork-url $ROBINHOOD_RPC_URL --chain-id 4663'
+    preset: 'server'
+    options:
+      envFile: '/apps/app/.env'

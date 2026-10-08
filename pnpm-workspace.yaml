@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Fail fast on a Node older than package.json "engines"
+engineStrict: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - lefthook
+  - lightningcss

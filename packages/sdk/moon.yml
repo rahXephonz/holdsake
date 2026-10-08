@@ -1,0 +1,24 @@
+$schema: '../../.moon/cache/schemas/project.json'
+
+tags: ['sdk']
+dependsOn: ['contracts']
+
+tasks:
+  generate:
+    # Until the first Holdsake*.sol contract exists there is nothing to generate; write an empty
+    # module so the app still typechecks. Drop the else branch once HoldsakeGifts lands.
+    script: |
+      if ls ../../contracts/out 2>/dev/null | grep -q '^Holdsake'; then
+        wagmi generate
+      else
+        mkdir -p src/generated && echo 'export {}' > src/generated/abis.ts
+      fi
+    deps: ['contracts:build']
+    inputs: ['wagmi.config.ts', '/contracts/out/**/*']
+    outputs: ['src/generated']
+  typecheck:
+    command: 'tsc --noEmit'
+    deps: ['generate']
+  test:
+    command: 'vitest run --passWithNoTests'
+    deps: ['generate']

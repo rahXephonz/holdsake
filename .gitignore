@@ -1,0 +1,19 @@
+node_modules
+.DS_Store
+.env
+.env.*
+!.env.example
+*.local
+dist
+.output
+.nitro
+.tanstack
+.vercel
+.moon/cache
+.moon/docker
+
+# Foundry
+contracts/out
+contracts/cache
+contracts/broadcast/*/31337
+contracts/dependencies

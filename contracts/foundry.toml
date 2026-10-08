@@ -1,0 +1,44 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["dependencies"]
+solc_version = "0.8.28"
+# Robinhood Chain is Arbitrum Orbit. Confirm the ArbOS version supports this EVM version
+# ("Verify first" step 8) before the first deploy.
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "none"
+
+[profile.default.fuzz]
+runs = 1024
+
+[profile.default.invariant]
+runs = 256
+depth = 64
+fail_on_revert = false
+
+[profile.ci.fuzz]
+runs = 10000
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = false
+int_types = "long"
+quote_style = "double"
+number_underscore = "thousands"
+
+[rpc_endpoints]
+robinhood = "${ROBINHOOD_RPC_URL}"
+
+[soldeer]
+remappings_generate = true
+remappings_regenerate = false
+remappings_location = "txt"
+
+[dependencies]
+forge-std = "1.17.0"
+"@openzeppelin-contracts" = "5.4.0"
