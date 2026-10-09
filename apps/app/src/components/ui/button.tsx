@@ -30,6 +30,8 @@ const buttonVariants = cva(
         'icon-sm':
           'size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg',
         'icon-lg': 'size-9',
+        // The one primary action at the bottom of a screen: full width, thumb height
+        xl: 'h-14 w-full gap-2 rounded-full text-base',
       },
     },
     defaultVariants: {

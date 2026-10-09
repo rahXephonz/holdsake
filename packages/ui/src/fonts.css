@@ -1,37 +1,11 @@
 /*
- * Self-hosted fonts. Not imported anywhere yet: drop the licensed woff2 files into ./fonts
- * (names below), then add `@import '@holdsake/ui/fonts.css';` to the app's styles.css.
- * Until then the font stacks in styles.css fall back to system fonts.
+ * Valley Sans, self-hosted (it isn't on Google Fonts; Google Sans is loaded from Google Fonts in
+ * each app's head). Not imported anywhere yet: drop the licensed woff2 into ./fonts, then add
+ * `@import '@holdsake/ui/fonts.css';` to the app's styles.css. Until then headings fall back to
+ * Google Sans.
  *
- *   fonts/google-sans-regular.woff2   400
- *   fonts/google-sans-medium.woff2    500
- *   fonts/google-sans-bold.woff2      700
  *   fonts/valley-sans-bold.woff2      700 (headings only)
  */
-
-@font-face {
-  font-family: 'Google Sans';
-  src: url('./fonts/google-sans-regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Google Sans';
-  src: url('./fonts/google-sans-medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Google Sans';
-  src: url('./fonts/google-sans-bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
 
 @font-face {
   font-family: 'Valley Sans';

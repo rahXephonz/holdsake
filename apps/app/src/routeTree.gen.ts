@@ -10,33 +10,688 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AddCashRouteImport } from './routes/add-cash'
+import { Route as BorrowRouteImport } from './routes/borrow'
+import { Route as CashOutRouteImport } from './routes/cash-out'
+import { Route as EarnRouteImport } from './routes/earn'
+import { Route as GiftsRouteImport } from './routes/gifts'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as SendRouteImport } from './routes/send'
+import { Route as SendStocksRouteImport } from './routes/send-stocks'
+import { Route as ApiMeRouteImport } from './routes/api/me'
+import { Route as ApiNotificationsRouteImport } from './routes/api/notifications'
+import { Route as ApiPortfolioRouteImport } from './routes/api/portfolio'
+import { Route as ApiRecipientsRouteImport } from './routes/api/recipients'
+import { Route as ApiSendsRouteImport } from './routes/api/sends'
+import { Route as ApiTradesRouteImport } from './routes/api/trades'
+import { Route as FundIdRouteImport } from './routes/fund/$id'
+import { Route as FundsIndexRouteImport } from './routes/funds/index'
+import { Route as FundsNewRouteImport } from './routes/funds/new'
+import { Route as GiftIdRouteImport } from './routes/gift/$id'
+import { Route as StocksIndexRouteImport } from './routes/stocks/index'
+import { Route as StocksTickerRouteImport } from './routes/stocks/$ticker'
+import { Route as TradeTickerRouteImport } from './routes/trade/$ticker'
+import { Route as ApiBorrowIndexRouteImport } from './routes/api/borrow/index'
+import { Route as ApiBorrowOpenRouteImport } from './routes/api/borrow/open'
+import { Route as ApiBorrowRepayRouteImport } from './routes/api/borrow/repay'
+import { Route as ApiBorrowTakeBackRouteImport } from './routes/api/borrow/take-back'
+import { Route as ApiCronPricesRouteImport } from './routes/api/cron/prices'
+import { Route as ApiEarnIndexRouteImport } from './routes/api/earn/index'
+import { Route as ApiEarnClaimRouteImport } from './routes/api/earn/claim'
+import { Route as ApiEarnDepositRouteImport } from './routes/api/earn/deposit'
+import { Route as ApiEarnWithdrawRouteImport } from './routes/api/earn/withdraw'
+import { Route as ApiFundsIndexRouteImport } from './routes/api/funds/index'
+import { Route as ApiGiftsIndexRouteImport } from './routes/api/gifts/index'
+import { Route as ApiGiftsQuoteRouteImport } from './routes/api/gifts/quote'
+import { Route as ApiHandlesHandleRouteImport } from './routes/api/handles/$handle'
+import { Route as ApiStocksIndexRouteImport } from './routes/api/stocks/index'
+import { Route as ApiFundsIdIndexRouteImport } from './routes/api/funds/$id/index'
+import { Route as ApiFundsIdContributeRouteImport } from './routes/api/funds/$id/contribute'
+import { Route as ApiFundsIdContributeCashRouteImport } from './routes/api/funds/$id/contribute-cash'
+import { Route as ApiFundsIdWithdrawRouteImport } from './routes/api/funds/$id/withdraw'
+import { Route as ApiGiftsIdIndexRouteImport } from './routes/api/gifts/$id/index'
+import { Route as ApiGiftsIdCardDotpngRouteImport } from './routes/api/gifts/$id/card[.]png'
+import { Route as ApiGiftsIdClaimRouteImport } from './routes/api/gifts/$id/claim'
+import { Route as ApiGiftsIdRefundRouteImport } from './routes/api/gifts/$id/refund'
+import { Route as ApiOperationsIdSubmitRouteImport } from './routes/api/operations/$id/submit'
+import { Route as ApiStocksTickerChartRouteImport } from './routes/api/stocks/$ticker/chart'
+import { Route as ApiStocksTickerLogoRouteImport } from './routes/api/stocks/$ticker/logo'
+import { Route as ApiStocksTickerProfileRouteImport } from './routes/api/stocks/$ticker/profile'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AddCashRoute = AddCashRouteImport.update({
+  id: '/add-cash',
+  path: '/add-cash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BorrowRoute = BorrowRouteImport.update({
+  id: '/borrow',
+  path: '/borrow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CashOutRoute = CashOutRouteImport.update({
+  id: '/cash-out',
+  path: '/cash-out',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarnRoute = EarnRouteImport.update({
+  id: '/earn',
+  path: '/earn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GiftsRoute = GiftsRouteImport.update({
+  id: '/gifts',
+  path: '/gifts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SendRoute = SendRouteImport.update({
+  id: '/send',
+  path: '/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SendStocksRoute = SendStocksRouteImport.update({
+  id: '/send-stocks',
+  path: '/send-stocks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMeRoute = ApiMeRouteImport.update({
+  id: '/api/me',
+  path: '/api/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNotificationsRoute = ApiNotificationsRouteImport.update({
+  id: '/api/notifications',
+  path: '/api/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPortfolioRoute = ApiPortfolioRouteImport.update({
+  id: '/api/portfolio',
+  path: '/api/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRecipientsRoute = ApiRecipientsRouteImport.update({
+  id: '/api/recipients',
+  path: '/api/recipients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSendsRoute = ApiSendsRouteImport.update({
+  id: '/api/sends',
+  path: '/api/sends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTradesRoute = ApiTradesRouteImport.update({
+  id: '/api/trades',
+  path: '/api/trades',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FundIdRoute = FundIdRouteImport.update({
+  id: '/fund/$id',
+  path: '/fund/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FundsIndexRoute = FundsIndexRouteImport.update({
+  id: '/funds/',
+  path: '/funds/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FundsNewRoute = FundsNewRouteImport.update({
+  id: '/funds/new',
+  path: '/funds/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GiftIdRoute = GiftIdRouteImport.update({
+  id: '/gift/$id',
+  path: '/gift/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StocksIndexRoute = StocksIndexRouteImport.update({
+  id: '/stocks/',
+  path: '/stocks/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StocksTickerRoute = StocksTickerRouteImport.update({
+  id: '/stocks/$ticker',
+  path: '/stocks/$ticker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TradeTickerRoute = TradeTickerRouteImport.update({
+  id: '/trade/$ticker',
+  path: '/trade/$ticker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBorrowIndexRoute = ApiBorrowIndexRouteImport.update({
+  id: '/api/borrow/',
+  path: '/api/borrow/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBorrowOpenRoute = ApiBorrowOpenRouteImport.update({
+  id: '/api/borrow/open',
+  path: '/api/borrow/open',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBorrowRepayRoute = ApiBorrowRepayRouteImport.update({
+  id: '/api/borrow/repay',
+  path: '/api/borrow/repay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBorrowTakeBackRoute = ApiBorrowTakeBackRouteImport.update({
+  id: '/api/borrow/take-back',
+  path: '/api/borrow/take-back',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronPricesRoute = ApiCronPricesRouteImport.update({
+  id: '/api/cron/prices',
+  path: '/api/cron/prices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEarnIndexRoute = ApiEarnIndexRouteImport.update({
+  id: '/api/earn/',
+  path: '/api/earn/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEarnClaimRoute = ApiEarnClaimRouteImport.update({
+  id: '/api/earn/claim',
+  path: '/api/earn/claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEarnDepositRoute = ApiEarnDepositRouteImport.update({
+  id: '/api/earn/deposit',
+  path: '/api/earn/deposit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEarnWithdrawRoute = ApiEarnWithdrawRouteImport.update({
+  id: '/api/earn/withdraw',
+  path: '/api/earn/withdraw',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFundsIndexRoute = ApiFundsIndexRouteImport.update({
+  id: '/api/funds/',
+  path: '/api/funds/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGiftsIndexRoute = ApiGiftsIndexRouteImport.update({
+  id: '/api/gifts/',
+  path: '/api/gifts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGiftsQuoteRoute = ApiGiftsQuoteRouteImport.update({
+  id: '/api/gifts/quote',
+  path: '/api/gifts/quote',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHandlesHandleRoute = ApiHandlesHandleRouteImport.update({
+  id: '/api/handles/$handle',
+  path: '/api/handles/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStocksIndexRoute = ApiStocksIndexRouteImport.update({
+  id: '/api/stocks/',
+  path: '/api/stocks/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFundsIdIndexRoute = ApiFundsIdIndexRouteImport.update({
+  id: '/api/funds/$id/',
+  path: '/api/funds/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFundsIdContributeRoute = ApiFundsIdContributeRouteImport.update({
+  id: '/api/funds/$id/contribute',
+  path: '/api/funds/$id/contribute',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFundsIdContributeCashRoute =
+  ApiFundsIdContributeCashRouteImport.update({
+    id: '/api/funds/$id/contribute-cash',
+    path: '/api/funds/$id/contribute-cash',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiFundsIdWithdrawRoute = ApiFundsIdWithdrawRouteImport.update({
+  id: '/api/funds/$id/withdraw',
+  path: '/api/funds/$id/withdraw',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGiftsIdIndexRoute = ApiGiftsIdIndexRouteImport.update({
+  id: '/api/gifts/$id/',
+  path: '/api/gifts/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGiftsIdCardDotpngRoute = ApiGiftsIdCardDotpngRouteImport.update({
+  id: '/api/gifts/$id/card.png',
+  path: '/api/gifts/$id/card.png',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGiftsIdClaimRoute = ApiGiftsIdClaimRouteImport.update({
+  id: '/api/gifts/$id/claim',
+  path: '/api/gifts/$id/claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGiftsIdRefundRoute = ApiGiftsIdRefundRouteImport.update({
+  id: '/api/gifts/$id/refund',
+  path: '/api/gifts/$id/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOperationsIdSubmitRoute = ApiOperationsIdSubmitRouteImport.update({
+  id: '/api/operations/$id/submit',
+  path: '/api/operations/$id/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStocksTickerChartRoute = ApiStocksTickerChartRouteImport.update({
+  id: '/api/stocks/$ticker/chart',
+  path: '/api/stocks/$ticker/chart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStocksTickerLogoRoute = ApiStocksTickerLogoRouteImport.update({
+  id: '/api/stocks/$ticker/logo',
+  path: '/api/stocks/$ticker/logo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStocksTickerProfileRoute = ApiStocksTickerProfileRouteImport.update({
+  id: '/api/stocks/$ticker/profile',
+  path: '/api/stocks/$ticker/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/add-cash': typeof AddCashRoute
+  '/borrow': typeof BorrowRoute
+  '/cash-out': typeof CashOutRoute
+  '/earn': typeof EarnRoute
+  '/gifts': typeof GiftsRoute
+  '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
+  '/send': typeof SendRoute
+  '/send-stocks': typeof SendStocksRoute
+  '/api/me': typeof ApiMeRoute
+  '/api/notifications': typeof ApiNotificationsRoute
+  '/api/portfolio': typeof ApiPortfolioRoute
+  '/api/recipients': typeof ApiRecipientsRoute
+  '/api/sends': typeof ApiSendsRoute
+  '/api/trades': typeof ApiTradesRoute
+  '/fund/$id': typeof FundIdRoute
+  '/funds/new': typeof FundsNewRoute
+  '/gift/$id': typeof GiftIdRoute
+  '/stocks/$ticker': typeof StocksTickerRoute
+  '/trade/$ticker': typeof TradeTickerRoute
+  '/funds/': typeof FundsIndexRoute
+  '/stocks/': typeof StocksIndexRoute
+  '/api/borrow/open': typeof ApiBorrowOpenRoute
+  '/api/borrow/repay': typeof ApiBorrowRepayRoute
+  '/api/borrow/take-back': typeof ApiBorrowTakeBackRoute
+  '/api/cron/prices': typeof ApiCronPricesRoute
+  '/api/earn/claim': typeof ApiEarnClaimRoute
+  '/api/earn/deposit': typeof ApiEarnDepositRoute
+  '/api/earn/withdraw': typeof ApiEarnWithdrawRoute
+  '/api/gifts/quote': typeof ApiGiftsQuoteRoute
+  '/api/handles/$handle': typeof ApiHandlesHandleRoute
+  '/api/borrow/': typeof ApiBorrowIndexRoute
+  '/api/earn/': typeof ApiEarnIndexRoute
+  '/api/funds/': typeof ApiFundsIndexRoute
+  '/api/gifts/': typeof ApiGiftsIndexRoute
+  '/api/stocks/': typeof ApiStocksIndexRoute
+  '/api/funds/$id/contribute': typeof ApiFundsIdContributeRoute
+  '/api/funds/$id/contribute-cash': typeof ApiFundsIdContributeCashRoute
+  '/api/funds/$id/withdraw': typeof ApiFundsIdWithdrawRoute
+  '/api/gifts/$id/card.png': typeof ApiGiftsIdCardDotpngRoute
+  '/api/gifts/$id/claim': typeof ApiGiftsIdClaimRoute
+  '/api/gifts/$id/refund': typeof ApiGiftsIdRefundRoute
+  '/api/operations/$id/submit': typeof ApiOperationsIdSubmitRoute
+  '/api/stocks/$ticker/chart': typeof ApiStocksTickerChartRoute
+  '/api/stocks/$ticker/logo': typeof ApiStocksTickerLogoRoute
+  '/api/stocks/$ticker/profile': typeof ApiStocksTickerProfileRoute
+  '/api/funds/$id/': typeof ApiFundsIdIndexRoute
+  '/api/gifts/$id/': typeof ApiGiftsIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/add-cash': typeof AddCashRoute
+  '/borrow': typeof BorrowRoute
+  '/cash-out': typeof CashOutRoute
+  '/earn': typeof EarnRoute
+  '/gifts': typeof GiftsRoute
+  '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
+  '/send': typeof SendRoute
+  '/send-stocks': typeof SendStocksRoute
+  '/api/me': typeof ApiMeRoute
+  '/api/notifications': typeof ApiNotificationsRoute
+  '/api/portfolio': typeof ApiPortfolioRoute
+  '/api/recipients': typeof ApiRecipientsRoute
+  '/api/sends': typeof ApiSendsRoute
+  '/api/trades': typeof ApiTradesRoute
+  '/fund/$id': typeof FundIdRoute
+  '/funds/new': typeof FundsNewRoute
+  '/gift/$id': typeof GiftIdRoute
+  '/stocks/$ticker': typeof StocksTickerRoute
+  '/trade/$ticker': typeof TradeTickerRoute
+  '/funds': typeof FundsIndexRoute
+  '/stocks': typeof StocksIndexRoute
+  '/api/borrow/open': typeof ApiBorrowOpenRoute
+  '/api/borrow/repay': typeof ApiBorrowRepayRoute
+  '/api/borrow/take-back': typeof ApiBorrowTakeBackRoute
+  '/api/cron/prices': typeof ApiCronPricesRoute
+  '/api/earn/claim': typeof ApiEarnClaimRoute
+  '/api/earn/deposit': typeof ApiEarnDepositRoute
+  '/api/earn/withdraw': typeof ApiEarnWithdrawRoute
+  '/api/gifts/quote': typeof ApiGiftsQuoteRoute
+  '/api/handles/$handle': typeof ApiHandlesHandleRoute
+  '/api/borrow': typeof ApiBorrowIndexRoute
+  '/api/earn': typeof ApiEarnIndexRoute
+  '/api/funds': typeof ApiFundsIndexRoute
+  '/api/gifts': typeof ApiGiftsIndexRoute
+  '/api/stocks': typeof ApiStocksIndexRoute
+  '/api/funds/$id/contribute': typeof ApiFundsIdContributeRoute
+  '/api/funds/$id/contribute-cash': typeof ApiFundsIdContributeCashRoute
+  '/api/funds/$id/withdraw': typeof ApiFundsIdWithdrawRoute
+  '/api/gifts/$id/card.png': typeof ApiGiftsIdCardDotpngRoute
+  '/api/gifts/$id/claim': typeof ApiGiftsIdClaimRoute
+  '/api/gifts/$id/refund': typeof ApiGiftsIdRefundRoute
+  '/api/operations/$id/submit': typeof ApiOperationsIdSubmitRoute
+  '/api/stocks/$ticker/chart': typeof ApiStocksTickerChartRoute
+  '/api/stocks/$ticker/logo': typeof ApiStocksTickerLogoRoute
+  '/api/stocks/$ticker/profile': typeof ApiStocksTickerProfileRoute
+  '/api/funds/$id': typeof ApiFundsIdIndexRoute
+  '/api/gifts/$id': typeof ApiGiftsIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/add-cash': typeof AddCashRoute
+  '/borrow': typeof BorrowRoute
+  '/cash-out': typeof CashOutRoute
+  '/earn': typeof EarnRoute
+  '/gifts': typeof GiftsRoute
+  '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
+  '/send': typeof SendRoute
+  '/send-stocks': typeof SendStocksRoute
+  '/api/me': typeof ApiMeRoute
+  '/api/notifications': typeof ApiNotificationsRoute
+  '/api/portfolio': typeof ApiPortfolioRoute
+  '/api/recipients': typeof ApiRecipientsRoute
+  '/api/sends': typeof ApiSendsRoute
+  '/api/trades': typeof ApiTradesRoute
+  '/fund/$id': typeof FundIdRoute
+  '/funds/new': typeof FundsNewRoute
+  '/gift/$id': typeof GiftIdRoute
+  '/stocks/$ticker': typeof StocksTickerRoute
+  '/trade/$ticker': typeof TradeTickerRoute
+  '/funds/': typeof FundsIndexRoute
+  '/stocks/': typeof StocksIndexRoute
+  '/api/borrow/open': typeof ApiBorrowOpenRoute
+  '/api/borrow/repay': typeof ApiBorrowRepayRoute
+  '/api/borrow/take-back': typeof ApiBorrowTakeBackRoute
+  '/api/cron/prices': typeof ApiCronPricesRoute
+  '/api/earn/claim': typeof ApiEarnClaimRoute
+  '/api/earn/deposit': typeof ApiEarnDepositRoute
+  '/api/earn/withdraw': typeof ApiEarnWithdrawRoute
+  '/api/gifts/quote': typeof ApiGiftsQuoteRoute
+  '/api/handles/$handle': typeof ApiHandlesHandleRoute
+  '/api/borrow/': typeof ApiBorrowIndexRoute
+  '/api/earn/': typeof ApiEarnIndexRoute
+  '/api/funds/': typeof ApiFundsIndexRoute
+  '/api/gifts/': typeof ApiGiftsIndexRoute
+  '/api/stocks/': typeof ApiStocksIndexRoute
+  '/api/funds/$id/contribute': typeof ApiFundsIdContributeRoute
+  '/api/funds/$id/contribute-cash': typeof ApiFundsIdContributeCashRoute
+  '/api/funds/$id/withdraw': typeof ApiFundsIdWithdrawRoute
+  '/api/gifts/$id/card.png': typeof ApiGiftsIdCardDotpngRoute
+  '/api/gifts/$id/claim': typeof ApiGiftsIdClaimRoute
+  '/api/gifts/$id/refund': typeof ApiGiftsIdRefundRoute
+  '/api/operations/$id/submit': typeof ApiOperationsIdSubmitRoute
+  '/api/stocks/$ticker/chart': typeof ApiStocksTickerChartRoute
+  '/api/stocks/$ticker/logo': typeof ApiStocksTickerLogoRoute
+  '/api/stocks/$ticker/profile': typeof ApiStocksTickerProfileRoute
+  '/api/funds/$id/': typeof ApiFundsIdIndexRoute
+  '/api/gifts/$id/': typeof ApiGiftsIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/add-cash'
+    | '/borrow'
+    | '/cash-out'
+    | '/earn'
+    | '/gifts'
+    | '/login'
+    | '/notifications'
+    | '/onboarding'
+    | '/profile'
+    | '/send'
+    | '/send-stocks'
+    | '/api/me'
+    | '/api/notifications'
+    | '/api/portfolio'
+    | '/api/recipients'
+    | '/api/sends'
+    | '/api/trades'
+    | '/fund/$id'
+    | '/funds/new'
+    | '/gift/$id'
+    | '/stocks/$ticker'
+    | '/trade/$ticker'
+    | '/funds/'
+    | '/stocks/'
+    | '/api/borrow/open'
+    | '/api/borrow/repay'
+    | '/api/borrow/take-back'
+    | '/api/cron/prices'
+    | '/api/earn/claim'
+    | '/api/earn/deposit'
+    | '/api/earn/withdraw'
+    | '/api/gifts/quote'
+    | '/api/handles/$handle'
+    | '/api/borrow/'
+    | '/api/earn/'
+    | '/api/funds/'
+    | '/api/gifts/'
+    | '/api/stocks/'
+    | '/api/funds/$id/contribute'
+    | '/api/funds/$id/contribute-cash'
+    | '/api/funds/$id/withdraw'
+    | '/api/gifts/$id/card.png'
+    | '/api/gifts/$id/claim'
+    | '/api/gifts/$id/refund'
+    | '/api/operations/$id/submit'
+    | '/api/stocks/$ticker/chart'
+    | '/api/stocks/$ticker/logo'
+    | '/api/stocks/$ticker/profile'
+    | '/api/funds/$id/'
+    | '/api/gifts/$id/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/add-cash'
+    | '/borrow'
+    | '/cash-out'
+    | '/earn'
+    | '/gifts'
+    | '/login'
+    | '/notifications'
+    | '/onboarding'
+    | '/profile'
+    | '/send'
+    | '/send-stocks'
+    | '/api/me'
+    | '/api/notifications'
+    | '/api/portfolio'
+    | '/api/recipients'
+    | '/api/sends'
+    | '/api/trades'
+    | '/fund/$id'
+    | '/funds/new'
+    | '/gift/$id'
+    | '/stocks/$ticker'
+    | '/trade/$ticker'
+    | '/funds'
+    | '/stocks'
+    | '/api/borrow/open'
+    | '/api/borrow/repay'
+    | '/api/borrow/take-back'
+    | '/api/cron/prices'
+    | '/api/earn/claim'
+    | '/api/earn/deposit'
+    | '/api/earn/withdraw'
+    | '/api/gifts/quote'
+    | '/api/handles/$handle'
+    | '/api/borrow'
+    | '/api/earn'
+    | '/api/funds'
+    | '/api/gifts'
+    | '/api/stocks'
+    | '/api/funds/$id/contribute'
+    | '/api/funds/$id/contribute-cash'
+    | '/api/funds/$id/withdraw'
+    | '/api/gifts/$id/card.png'
+    | '/api/gifts/$id/claim'
+    | '/api/gifts/$id/refund'
+    | '/api/operations/$id/submit'
+    | '/api/stocks/$ticker/chart'
+    | '/api/stocks/$ticker/logo'
+    | '/api/stocks/$ticker/profile'
+    | '/api/funds/$id'
+    | '/api/gifts/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/add-cash'
+    | '/borrow'
+    | '/cash-out'
+    | '/earn'
+    | '/gifts'
+    | '/login'
+    | '/notifications'
+    | '/onboarding'
+    | '/profile'
+    | '/send'
+    | '/send-stocks'
+    | '/api/me'
+    | '/api/notifications'
+    | '/api/portfolio'
+    | '/api/recipients'
+    | '/api/sends'
+    | '/api/trades'
+    | '/fund/$id'
+    | '/funds/new'
+    | '/gift/$id'
+    | '/stocks/$ticker'
+    | '/trade/$ticker'
+    | '/funds/'
+    | '/stocks/'
+    | '/api/borrow/open'
+    | '/api/borrow/repay'
+    | '/api/borrow/take-back'
+    | '/api/cron/prices'
+    | '/api/earn/claim'
+    | '/api/earn/deposit'
+    | '/api/earn/withdraw'
+    | '/api/gifts/quote'
+    | '/api/handles/$handle'
+    | '/api/borrow/'
+    | '/api/earn/'
+    | '/api/funds/'
+    | '/api/gifts/'
+    | '/api/stocks/'
+    | '/api/funds/$id/contribute'
+    | '/api/funds/$id/contribute-cash'
+    | '/api/funds/$id/withdraw'
+    | '/api/gifts/$id/card.png'
+    | '/api/gifts/$id/claim'
+    | '/api/gifts/$id/refund'
+    | '/api/operations/$id/submit'
+    | '/api/stocks/$ticker/chart'
+    | '/api/stocks/$ticker/logo'
+    | '/api/stocks/$ticker/profile'
+    | '/api/funds/$id/'
+    | '/api/gifts/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AddCashRoute: typeof AddCashRoute
+  BorrowRoute: typeof BorrowRoute
+  CashOutRoute: typeof CashOutRoute
+  EarnRoute: typeof EarnRoute
+  GiftsRoute: typeof GiftsRoute
+  LoginRoute: typeof LoginRoute
+  NotificationsRoute: typeof NotificationsRoute
+  OnboardingRoute: typeof OnboardingRoute
+  ProfileRoute: typeof ProfileRoute
+  SendRoute: typeof SendRoute
+  SendStocksRoute: typeof SendStocksRoute
+  ApiMeRoute: typeof ApiMeRoute
+  ApiNotificationsRoute: typeof ApiNotificationsRoute
+  ApiPortfolioRoute: typeof ApiPortfolioRoute
+  ApiRecipientsRoute: typeof ApiRecipientsRoute
+  ApiSendsRoute: typeof ApiSendsRoute
+  ApiTradesRoute: typeof ApiTradesRoute
+  FundIdRoute: typeof FundIdRoute
+  FundsNewRoute: typeof FundsNewRoute
+  GiftIdRoute: typeof GiftIdRoute
+  StocksTickerRoute: typeof StocksTickerRoute
+  TradeTickerRoute: typeof TradeTickerRoute
+  FundsIndexRoute: typeof FundsIndexRoute
+  StocksIndexRoute: typeof StocksIndexRoute
+  ApiBorrowOpenRoute: typeof ApiBorrowOpenRoute
+  ApiBorrowRepayRoute: typeof ApiBorrowRepayRoute
+  ApiBorrowTakeBackRoute: typeof ApiBorrowTakeBackRoute
+  ApiCronPricesRoute: typeof ApiCronPricesRoute
+  ApiEarnClaimRoute: typeof ApiEarnClaimRoute
+  ApiEarnDepositRoute: typeof ApiEarnDepositRoute
+  ApiEarnWithdrawRoute: typeof ApiEarnWithdrawRoute
+  ApiGiftsQuoteRoute: typeof ApiGiftsQuoteRoute
+  ApiHandlesHandleRoute: typeof ApiHandlesHandleRoute
+  ApiBorrowIndexRoute: typeof ApiBorrowIndexRoute
+  ApiEarnIndexRoute: typeof ApiEarnIndexRoute
+  ApiFundsIndexRoute: typeof ApiFundsIndexRoute
+  ApiGiftsIndexRoute: typeof ApiGiftsIndexRoute
+  ApiStocksIndexRoute: typeof ApiStocksIndexRoute
+  ApiFundsIdContributeRoute: typeof ApiFundsIdContributeRoute
+  ApiFundsIdContributeCashRoute: typeof ApiFundsIdContributeCashRoute
+  ApiFundsIdWithdrawRoute: typeof ApiFundsIdWithdrawRoute
+  ApiGiftsIdCardDotpngRoute: typeof ApiGiftsIdCardDotpngRoute
+  ApiGiftsIdClaimRoute: typeof ApiGiftsIdClaimRoute
+  ApiGiftsIdRefundRoute: typeof ApiGiftsIdRefundRoute
+  ApiOperationsIdSubmitRoute: typeof ApiOperationsIdSubmitRoute
+  ApiStocksTickerChartRoute: typeof ApiStocksTickerChartRoute
+  ApiStocksTickerLogoRoute: typeof ApiStocksTickerLogoRoute
+  ApiStocksTickerProfileRoute: typeof ApiStocksTickerProfileRoute
+  ApiFundsIdIndexRoute: typeof ApiFundsIdIndexRoute
+  ApiGiftsIdIndexRoute: typeof ApiGiftsIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +703,411 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/add-cash': {
+      id: '/add-cash'
+      path: '/add-cash'
+      fullPath: '/add-cash'
+      preLoaderRoute: typeof AddCashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/borrow': {
+      id: '/borrow'
+      path: '/borrow'
+      fullPath: '/borrow'
+      preLoaderRoute: typeof BorrowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cash-out': {
+      id: '/cash-out'
+      path: '/cash-out'
+      fullPath: '/cash-out'
+      preLoaderRoute: typeof CashOutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/earn': {
+      id: '/earn'
+      path: '/earn'
+      fullPath: '/earn'
+      preLoaderRoute: typeof EarnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gifts': {
+      id: '/gifts'
+      path: '/gifts'
+      fullPath: '/gifts'
+      preLoaderRoute: typeof GiftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/send': {
+      id: '/send'
+      path: '/send'
+      fullPath: '/send'
+      preLoaderRoute: typeof SendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/send-stocks': {
+      id: '/send-stocks'
+      path: '/send-stocks'
+      fullPath: '/send-stocks'
+      preLoaderRoute: typeof SendStocksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/me': {
+      id: '/api/me'
+      path: '/api/me'
+      fullPath: '/api/me'
+      preLoaderRoute: typeof ApiMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/notifications': {
+      id: '/api/notifications'
+      path: '/api/notifications'
+      fullPath: '/api/notifications'
+      preLoaderRoute: typeof ApiNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/portfolio': {
+      id: '/api/portfolio'
+      path: '/api/portfolio'
+      fullPath: '/api/portfolio'
+      preLoaderRoute: typeof ApiPortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/recipients': {
+      id: '/api/recipients'
+      path: '/api/recipients'
+      fullPath: '/api/recipients'
+      preLoaderRoute: typeof ApiRecipientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sends': {
+      id: '/api/sends'
+      path: '/api/sends'
+      fullPath: '/api/sends'
+      preLoaderRoute: typeof ApiSendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/trades': {
+      id: '/api/trades'
+      path: '/api/trades'
+      fullPath: '/api/trades'
+      preLoaderRoute: typeof ApiTradesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fund/$id': {
+      id: '/fund/$id'
+      path: '/fund/$id'
+      fullPath: '/fund/$id'
+      preLoaderRoute: typeof FundIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/funds/': {
+      id: '/funds/'
+      path: '/funds'
+      fullPath: '/funds/'
+      preLoaderRoute: typeof FundsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/funds/new': {
+      id: '/funds/new'
+      path: '/funds/new'
+      fullPath: '/funds/new'
+      preLoaderRoute: typeof FundsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gift/$id': {
+      id: '/gift/$id'
+      path: '/gift/$id'
+      fullPath: '/gift/$id'
+      preLoaderRoute: typeof GiftIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stocks/': {
+      id: '/stocks/'
+      path: '/stocks'
+      fullPath: '/stocks/'
+      preLoaderRoute: typeof StocksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stocks/$ticker': {
+      id: '/stocks/$ticker'
+      path: '/stocks/$ticker'
+      fullPath: '/stocks/$ticker'
+      preLoaderRoute: typeof StocksTickerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trade/$ticker': {
+      id: '/trade/$ticker'
+      path: '/trade/$ticker'
+      fullPath: '/trade/$ticker'
+      preLoaderRoute: typeof TradeTickerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/borrow/': {
+      id: '/api/borrow/'
+      path: '/api/borrow'
+      fullPath: '/api/borrow/'
+      preLoaderRoute: typeof ApiBorrowIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/borrow/open': {
+      id: '/api/borrow/open'
+      path: '/api/borrow/open'
+      fullPath: '/api/borrow/open'
+      preLoaderRoute: typeof ApiBorrowOpenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/borrow/repay': {
+      id: '/api/borrow/repay'
+      path: '/api/borrow/repay'
+      fullPath: '/api/borrow/repay'
+      preLoaderRoute: typeof ApiBorrowRepayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/borrow/take-back': {
+      id: '/api/borrow/take-back'
+      path: '/api/borrow/take-back'
+      fullPath: '/api/borrow/take-back'
+      preLoaderRoute: typeof ApiBorrowTakeBackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/prices': {
+      id: '/api/cron/prices'
+      path: '/api/cron/prices'
+      fullPath: '/api/cron/prices'
+      preLoaderRoute: typeof ApiCronPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/earn/': {
+      id: '/api/earn/'
+      path: '/api/earn'
+      fullPath: '/api/earn/'
+      preLoaderRoute: typeof ApiEarnIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/earn/claim': {
+      id: '/api/earn/claim'
+      path: '/api/earn/claim'
+      fullPath: '/api/earn/claim'
+      preLoaderRoute: typeof ApiEarnClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/earn/deposit': {
+      id: '/api/earn/deposit'
+      path: '/api/earn/deposit'
+      fullPath: '/api/earn/deposit'
+      preLoaderRoute: typeof ApiEarnDepositRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/earn/withdraw': {
+      id: '/api/earn/withdraw'
+      path: '/api/earn/withdraw'
+      fullPath: '/api/earn/withdraw'
+      preLoaderRoute: typeof ApiEarnWithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/funds/': {
+      id: '/api/funds/'
+      path: '/api/funds'
+      fullPath: '/api/funds/'
+      preLoaderRoute: typeof ApiFundsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gifts/': {
+      id: '/api/gifts/'
+      path: '/api/gifts'
+      fullPath: '/api/gifts/'
+      preLoaderRoute: typeof ApiGiftsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gifts/quote': {
+      id: '/api/gifts/quote'
+      path: '/api/gifts/quote'
+      fullPath: '/api/gifts/quote'
+      preLoaderRoute: typeof ApiGiftsQuoteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/handles/$handle': {
+      id: '/api/handles/$handle'
+      path: '/api/handles/$handle'
+      fullPath: '/api/handles/$handle'
+      preLoaderRoute: typeof ApiHandlesHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stocks/': {
+      id: '/api/stocks/'
+      path: '/api/stocks'
+      fullPath: '/api/stocks/'
+      preLoaderRoute: typeof ApiStocksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/funds/$id/': {
+      id: '/api/funds/$id/'
+      path: '/api/funds/$id'
+      fullPath: '/api/funds/$id/'
+      preLoaderRoute: typeof ApiFundsIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/funds/$id/contribute': {
+      id: '/api/funds/$id/contribute'
+      path: '/api/funds/$id/contribute'
+      fullPath: '/api/funds/$id/contribute'
+      preLoaderRoute: typeof ApiFundsIdContributeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/funds/$id/contribute-cash': {
+      id: '/api/funds/$id/contribute-cash'
+      path: '/api/funds/$id/contribute-cash'
+      fullPath: '/api/funds/$id/contribute-cash'
+      preLoaderRoute: typeof ApiFundsIdContributeCashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/funds/$id/withdraw': {
+      id: '/api/funds/$id/withdraw'
+      path: '/api/funds/$id/withdraw'
+      fullPath: '/api/funds/$id/withdraw'
+      preLoaderRoute: typeof ApiFundsIdWithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gifts/$id/': {
+      id: '/api/gifts/$id/'
+      path: '/api/gifts/$id'
+      fullPath: '/api/gifts/$id/'
+      preLoaderRoute: typeof ApiGiftsIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gifts/$id/card.png': {
+      id: '/api/gifts/$id/card.png'
+      path: '/api/gifts/$id/card.png'
+      fullPath: '/api/gifts/$id/card.png'
+      preLoaderRoute: typeof ApiGiftsIdCardDotpngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gifts/$id/claim': {
+      id: '/api/gifts/$id/claim'
+      path: '/api/gifts/$id/claim'
+      fullPath: '/api/gifts/$id/claim'
+      preLoaderRoute: typeof ApiGiftsIdClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gifts/$id/refund': {
+      id: '/api/gifts/$id/refund'
+      path: '/api/gifts/$id/refund'
+      fullPath: '/api/gifts/$id/refund'
+      preLoaderRoute: typeof ApiGiftsIdRefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/operations/$id/submit': {
+      id: '/api/operations/$id/submit'
+      path: '/api/operations/$id/submit'
+      fullPath: '/api/operations/$id/submit'
+      preLoaderRoute: typeof ApiOperationsIdSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stocks/$ticker/chart': {
+      id: '/api/stocks/$ticker/chart'
+      path: '/api/stocks/$ticker/chart'
+      fullPath: '/api/stocks/$ticker/chart'
+      preLoaderRoute: typeof ApiStocksTickerChartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stocks/$ticker/logo': {
+      id: '/api/stocks/$ticker/logo'
+      path: '/api/stocks/$ticker/logo'
+      fullPath: '/api/stocks/$ticker/logo'
+      preLoaderRoute: typeof ApiStocksTickerLogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stocks/$ticker/profile': {
+      id: '/api/stocks/$ticker/profile'
+      path: '/api/stocks/$ticker/profile'
+      fullPath: '/api/stocks/$ticker/profile'
+      preLoaderRoute: typeof ApiStocksTickerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AddCashRoute: AddCashRoute,
+  BorrowRoute: BorrowRoute,
+  CashOutRoute: CashOutRoute,
+  EarnRoute: EarnRoute,
+  GiftsRoute: GiftsRoute,
+  LoginRoute: LoginRoute,
+  NotificationsRoute: NotificationsRoute,
+  OnboardingRoute: OnboardingRoute,
+  ProfileRoute: ProfileRoute,
+  SendRoute: SendRoute,
+  SendStocksRoute: SendStocksRoute,
+  ApiMeRoute: ApiMeRoute,
+  ApiNotificationsRoute: ApiNotificationsRoute,
+  ApiPortfolioRoute: ApiPortfolioRoute,
+  ApiRecipientsRoute: ApiRecipientsRoute,
+  ApiSendsRoute: ApiSendsRoute,
+  ApiTradesRoute: ApiTradesRoute,
+  FundIdRoute: FundIdRoute,
+  FundsNewRoute: FundsNewRoute,
+  GiftIdRoute: GiftIdRoute,
+  StocksTickerRoute: StocksTickerRoute,
+  TradeTickerRoute: TradeTickerRoute,
+  FundsIndexRoute: FundsIndexRoute,
+  StocksIndexRoute: StocksIndexRoute,
+  ApiBorrowOpenRoute: ApiBorrowOpenRoute,
+  ApiBorrowRepayRoute: ApiBorrowRepayRoute,
+  ApiBorrowTakeBackRoute: ApiBorrowTakeBackRoute,
+  ApiCronPricesRoute: ApiCronPricesRoute,
+  ApiEarnClaimRoute: ApiEarnClaimRoute,
+  ApiEarnDepositRoute: ApiEarnDepositRoute,
+  ApiEarnWithdrawRoute: ApiEarnWithdrawRoute,
+  ApiGiftsQuoteRoute: ApiGiftsQuoteRoute,
+  ApiHandlesHandleRoute: ApiHandlesHandleRoute,
+  ApiBorrowIndexRoute: ApiBorrowIndexRoute,
+  ApiEarnIndexRoute: ApiEarnIndexRoute,
+  ApiFundsIndexRoute: ApiFundsIndexRoute,
+  ApiGiftsIndexRoute: ApiGiftsIndexRoute,
+  ApiStocksIndexRoute: ApiStocksIndexRoute,
+  ApiFundsIdContributeRoute: ApiFundsIdContributeRoute,
+  ApiFundsIdContributeCashRoute: ApiFundsIdContributeCashRoute,
+  ApiFundsIdWithdrawRoute: ApiFundsIdWithdrawRoute,
+  ApiGiftsIdCardDotpngRoute: ApiGiftsIdCardDotpngRoute,
+  ApiGiftsIdClaimRoute: ApiGiftsIdClaimRoute,
+  ApiGiftsIdRefundRoute: ApiGiftsIdRefundRoute,
+  ApiOperationsIdSubmitRoute: ApiOperationsIdSubmitRoute,
+  ApiStocksTickerChartRoute: ApiStocksTickerChartRoute,
+  ApiStocksTickerLogoRoute: ApiStocksTickerLogoRoute,
+  ApiStocksTickerProfileRoute: ApiStocksTickerProfileRoute,
+  ApiFundsIdIndexRoute: ApiFundsIdIndexRoute,
+  ApiGiftsIdIndexRoute: ApiGiftsIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -7,6 +7,8 @@
 
 @theme inline {
   --font-sans: 'Google Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Every amount, price and count; pair with tabular-nums */
+  --font-number: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-heading:
     'Valley Sans', 'Google Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
