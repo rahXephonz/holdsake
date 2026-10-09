@@ -25,6 +25,13 @@ export const MORPHO_BLUE: Address = '0x9d53d5e3bd5e8d4cbfa6db1ca238aea02e651010'
 /** Uniswap v4. PoolManager holds most TSLA and USDG on the chain, as expected. */
 export const UNISWAP_V4_POOL_MANAGER: Address = '0x8366a39cc670b4001a1121b8f6a443a643e40951'
 export const UNISWAP_V4_STATE_VIEW: Address = '0xf3334192d15450cdd385c8b70e03f9a6bd9e673b'
+/**
+ * From Uniswap's Robinhood Chain deployment list, checked on-chain 2026-10-07: both report the
+ * PoolManager above as their `poolManager()`. Universal Router 2.1.2 supersedes 0x8876…0904 and
+ * 0x06af…BF99, which the docs list as older.
+ */
+export const UNISWAP_V4_QUOTER: Address = '0x8Dc178eFB8111BB0973Dd9d722ebeFF267c98F94'
+export const UNIVERSAL_ROUTER: Address = '0x204FAca1764B154221e35c0d20aBb3c525710498'
 
 /**
  * Chainlink USD feeds (8 decimals, 24h heartbeat, 0.5% deviation). Stock feeds run 24/5 and
@@ -49,11 +56,44 @@ export const CHAINLINK_FEEDS = {
 /**
  * Our contracts, every deployed version. Contracts are non-upgradeable, so a fix ships as a new
  * version and old ones keep running: indexers read all of them and key rows by
- * (contract address, on-chain id). Empty until the first deploy.
+ * (contract address, on-chain id). The last entry is the current one.
+ *
+ * v1, deployed 2026-10-09 at blocks 84043655–84043671 (`contracts/broadcast/Deploy.s.sol/4663`).
+ * Read back on-chain: token list owned by the Safe below with USDG and all 194 stocks allowed;
+ * gifts and funds point at that list, gifts' cash is USDG; paymaster on EntryPoint v0.8 with
+ * signer 0x9367…D96A and maxCostPerOp 0.0002 ETH, owned by the Safe.
  */
 export const deployments = {
-  tokenList: [] as Address[],
-  gifts: [] as Address[],
-  funds: [] as Address[],
-  paymaster: [] as Address[],
+  tokenList: ['0xEe7c5B5a9eeAf667A6EFb217A8a77534C873f7a9'] as Address[],
+  gifts: ['0x4b96E74B963efa7Ab7D7497854Fc87220Bd092C4'] as Address[],
+  funds: ['0x1515c22fDBa8CCa4B3610dEbCf8BEa8867055Bd7'] as Address[],
+  paymaster: ['0x04CD74e77ac145B18d61c6C8D7939e3241DBB60A'] as Address[],
 } as const
+
+/**
+ * Earn: the lending vault people's cash goes into (Morpho Vault V2, ERC-4626 over USDG). Chosen
+ * 2026-10-09 by the user: NetNet Credit (nnUSDG) lends to people borrowing against Stock Tokens
+ * (SPCX, NVDA, AAPL, GOOGL, MSFT) plus wsNET. Read back on-chain: asset() is USDG, all four gates
+ * are unset (anyone may deposit and withdraw), 18-decimal shares. Its curator and owner is one
+ * multisig (0x3Bb7…5f42) with a 10% performance fee. Markets ran at ~99.8% use that day, so
+ * withdrawals can wait until borrowers repay; the screen says so. A new vault is a new entry.
+ */
+export const EARN_VAULT: Address = '0x99347d5F70D3838763f6Bddcf80304C8aa953B57'
+
+/**
+ * Borrow: the Morpho Blue markets offered, Stock Token collateral against USDG. Chosen
+ * 2026-10-09 after reading each on-chain: idToMarketParams gives USDG as loan, the canonical
+ * Stock Token as collateral, LLTV 62.5%, IRM 0x2BD3…0fa1; each oracle is Morpho's Chainlink
+ * oracle reading Chainlink proxies (owner 0xeE27…9C52, same aggregators and prices as
+ * CHAINLINK_FEEDS) for the stock and for USDG. NVDA/AAPL/GOOGL held ~$100k free at ~0.8%; TSLA
+ * ~$6.5k. The busy AAPL market (0xdeb4…, ~99.8% used) has a non-standard oracle: not offered.
+ */
+export const BORROW_MARKETS = {
+  NVDA: '0xf5ff7d546af5e72f3912d2aa723088fd0bf66fddc158714995637714d9db6e4c',
+  AAPL: '0xcaa167af7ba0422c76424fae56167b7db25bf19f4f435215e6dd7d06a943bdac',
+  GOOGL: '0xba01f6625137b692c5dd86afb8e654b4016d7b64e36dfca4124e84bef98bc4d2',
+  TSLA: '0xb41b34c5989420ad080e79363a9cfe3e23bec7459fcd2d88029250da370288df',
+} as const satisfies Record<string, `0x${string}`>
+
+/** Owns the token list and the paymaster: a Safe (1-of-1 for the demo; raise before real users). */
+export const OWNER_SAFE: Address = '0x812a47f8860ca05045C3Ad69FF0caea732f32922'

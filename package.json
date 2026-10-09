@@ -7,7 +7,8 @@
     "node": ">=24"
   },
   "scripts": {
-    "prepare": "test ! -e .git || lefthook install"
+    "prepare": "test ! -e .git || lefthook install",
+    "dev": "pnpm install && moon run app:dev"
   },
   "devDependencies": {
     "@moonrepo/cli": "2.6.0",

@@ -48,7 +48,7 @@ should quietly cost us money.
 | Landing         | Not decided. `apps/landing/` is an empty placeholder (see below)                                        |
 | Data fetching   | TanStack Query                                                                                          |
 | Styling         | Tailwind 4 + shadcn/ui on Base UI, per app; tokens and fonts in `packages/ui`                           |
-| Fonts           | Google Sans for everything, Valley Sans for headings only (see "Design")                                |
+| Fonts           | Google Sans for text, Space Grotesk for numbers, Valley Sans for headings only (see "Design")           |
 | Auth / wallets  | Privy (`@privy-io/react-auth`, `@privy-io/node`), embedded EVM wallets                                  |
 | DB              | Supabase Postgres; service role on the server only                                                      |
 | Chain           | viem; typed ABIs generated from Foundry output with `@wagmi/cli`                                        |
@@ -200,14 +200,21 @@ not their brands: no logos, brand colours, `$cashtag` styling or copy from eithe
 
 **Type**
 
-- **Google Sans** for everything: body, labels, buttons, numbers. Use tabular figures
-  (`font-variant-numeric: tabular-nums`) wherever amounts can change in place.
+- **Google Sans** for body, labels and buttons.
+- **Space Grotesk** for numbers: amounts, prices, changes, counts, codes. Always
+  `font-number tabular-nums` together (`--font-number`).
+- **Loaders**: `Spinner` (`@/components/ui/spinner`) wraps ldrs `Ring2`; skeletons for content
+  that has a known shape (`Skeleton`, `RowsSkeleton`).
+- **Success**: every money flow ends on `SuccessState` (`@/components/success-state`): a green
+  (`--gain`) check that pops in and draws itself, via `motion` 13 (`motion/react`), still under
+  `prefers-reduced-motion`.
 - **Valley Sans** for headings only (screen titles, share-card heroes). Never
   for body text, numbers or buttons.
-- Both are self-hosted as woff2 in `packages/ui/src/fonts` and declared once in
-  `packages/ui/src/styles.css` (`@font-face`, `font-display: swap`) as Tailwind theme tokens
-  (`--font-sans`, `--font-heading`). Apps preload the two weights they use above the fold. No
-  font CDN at runtime.
+- **Google Sans and Space Grotesk load from Google Fonts** (decided 2026-10-09, both OFL), linked
+  in each app's root head. Valley Sans isn't on Google Fonts: it's self-hosted from
+  `packages/ui/src/fonts` via `packages/ui/src/fonts.css` once the licensed woff2 is there, and
+  headings fall back to Google Sans until then. All three are Tailwind theme tokens in
+  `packages/ui/src/styles.css` (`--font-sans`, `--font-number`, `--font-heading`).
 - Confirm the licence of both fonts allows web embedding in a commercial app before shipping; if
   either doesn't, stop and ask rather than swapping in a lookalike.
 
@@ -216,7 +223,8 @@ not their brands: no logos, brand colours, `$cashtag` styling or copy from eithe
 - Components come from shadcn/ui set up with **Base UI** primitives (not Radix), styled with
   Tailwind. `apps/app` runs the shadcn CLI and owns its copies in `src/components/ui`
   (`components.json` in `apps/app`).
-- `components.json`: style `base-nova`, base colour neutral, Lucide icons. Generated components
+- `components.json`: style `base-nova`, base colour neutral, Phosphor icons
+  (`@phosphor-icons/react`; the CLI may still emit Lucide imports: swap them for Phosphor). Generated components
   import `cn` from shadcn's `cn` package (re-exported by `@/lib/utils`); that's expected.
 - Add a component with the shadcn CLI, then restyle it to the design above (fonts, light only,
   flat, one accent). Edit the generated file in place; don't wrap it in another layer.
@@ -261,12 +269,13 @@ project.
 | `ROBINHOOD_RPC_URL`                                           | server      | Chain 4663 RPC (may embed an API key: never log it)                                  |
 | `BUNDLER_URL`                                                 | server      | ERC-4337 bundler for chain 4663                                                      |
 | `PAYMASTER_SIGNER_KEY`                                        | server      | Signs sponsorships only. Holds no funds; its address is the paymaster's `signer`     |
-| `OPS_PRIVATE_KEY`                                             | server      | Hot wallet that is the treasury and tops up the paymaster. Keep only a little in it  |
+| `OPS_PRIVATE_KEY`                                             | server      | Hot wallet: sends `handleOps` (our own bundling); later tops up the paymaster        |
 | `TREASURY_ADDRESS`                                            | server      | Receives fees. Defaults to the ops wallet; the top-up cron only runs when they match |
 | `CRON_SECRET`                                                 | server      | Vercel sends it as `Authorization: Bearer` to `/api/cron/*`                          |
 | `TRADE_FEE_BPS`                                               | server      | Integrator fee on trades; unset means no fee                                         |
 | `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | both/server | Web push; unset keeps notifications in the feed only                                 |
 | `RESEND_API_KEY`                                              | server      | Email; unset sends nothing                                                           |
+| `EMAIL_FROM`                                                  | server      | Sender for every email; its domain must be verified in Resend                        |
 | `VITE_POSTHOG_PROJECT_TOKEN`, `VITE_POSTHOG_HOST`             | both        | Analytics; unset turns it off                                                        |
 
 Contract addresses are not env vars: they live in `packages/sdk/src/deployments.ts`, per chain
@@ -396,29 +405,31 @@ rate limits, zod body).
 
 Server modules in `src/lib/server`:
 
-| Module                | Owns                                                                                                  |
-| --------------------- | ----------------------------------------------------------------------------------------------------- |
-| `http.ts`             | `route()` wrapper, `HttpError`, `badRequest`/`forbidden`/`notFound`, `readBody` (zod)                 |
-| `privy.ts`            | Access-token auth, wallet lookup, `walletForEmail` (creates) vs `findWalletForEmail` (read-only)      |
-| `users.ts`            | Profile rows, `requireUser`, onboarding state                                                         |
-| `recipients.ts`       | `@handle`/email resolution, `resolveGiftRecipients`                                                   |
-| `rate-limit.ts`       | Per-user and per-IP windows on recipient lookup, gift routes and sponsored operations                 |
-| `chain.ts`            | viem clients, bundler, `buildUserOp`, simulate, submit with retries, receipt and event parsing        |
-| `paymaster.ts`        | Sponsorship signatures (`userOpHash`, chain, expiry), per-flow gas caps, failed-op counter            |
-| `submit.ts`           | Decodes a signed user operation and checks it against the draft row (see "Submit checks")             |
-| `tokens.ts`           | ERC-20 reads, `decimals`, `uiMultiplier`, multicall balances                                          |
-| `catalog.ts`          | Robinhood asset registry, cached; `findStock`, `findGiftAsset` (USDG resolves like a stock)           |
-| `prices.ts`           | Chainlink `pricePerShare` and `pricePerRaw`; Uniswap quote fallback for display and trade checks only |
-| `charts.ts`           | Candles from an indexer or pool events, outlier filtering, cached in `price_candles`                  |
-| `trades.ts`           | Uniswap routing (USDG pairs first), 3% fair-price check against Chainlink, integrator fee             |
-| `fees.ts`             | Gas-at-cost fee math in USDG, fee payment plan (see "Money rules")                                    |
-| `gifts.ts`            | Gift rows (`gift_items` embedded) to `GiftView`, keyed by `(contract, onchain id)`                    |
-| `funds.ts`            | Fund rows, balances read from `HoldsakeFunds`, `toFundView`                                           |
-| `borrow.ts`           | Positions, health and "falls X% before sale"; same math as the contract or market, tested against it  |
-| `events.ts`           | Reads our contracts' logs (every deployed version) and reconciles rows                                |
-| `notify.ts`           | The only way into the feed: settings filter, insert, then push and email                              |
-| `push.ts`, `email.ts` | Phone and inbox delivery; each inert with no key set                                                  |
-| `posthog.ts`          | Money events from submit routes only; amounts as bands, people only by Privy id                       |
+| Module          | Owns                                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| `http.ts`       | `route()` wrapper, `HttpError`, `badRequest`/`forbidden`/`notFound`, `readBody` (zod)                 |
+| `privy.ts`      | Access-token auth, wallet lookup, `walletForEmail` (creates) vs `findWalletForEmail` (read-only)      |
+| `users.ts`      | Profile rows, `requireUser`, onboarding state                                                         |
+| `recipients.ts` | `@handle`/email resolution, `resolveGiftRecipients`                                                   |
+| `rate-limit.ts` | Per-user and per-IP windows on recipient lookup, gift routes and sponsored operations                 |
+| `chain.ts`      | viem clients, bundler, `buildUserOp`, simulate, submit with retries, receipt and event parsing        |
+| `paymaster.ts`  | Sponsorship signatures (`userOpHash`, chain, expiry), per-flow gas caps, failed-op counter            |
+| `submit.ts`     | Decodes a signed user operation and checks it against the draft row (see "Submit checks")             |
+| `tokens.ts`     | ERC-20 reads, `decimals`, `uiMultiplier`, multicall balances                                          |
+| `catalog.ts`    | Robinhood asset registry, cached; `findStock`, `findGiftAsset` (USDG resolves like a stock)           |
+| `prices.ts`     | Chainlink `pricePerShare` and `pricePerRaw`; Uniswap quote fallback for display and trade checks only |
+| `charts.ts`     | Candles from an indexer or pool events, outlier filtering, cached in `price_candles`                  |
+| `trades.ts`     | Uniswap routing (USDG pairs first), 3% fair-price check against Chainlink, integrator fee             |
+| `fees.ts`       | Gas-at-cost fee math in USDG, fee payment plan (see "Money rules")                                    |
+| `gifts.ts`      | Gift rows (`gift_items` embedded) to `GiftView`, keyed by `(contract, onchain id)`                    |
+| `funds.ts`      | Fund rows, balances read from `HoldsakeFunds`, `toFundView`                                           |
+| `borrow.ts`     | Positions, health and "falls X% before sale"; same math as the contract or market, tested against it  |
+| `events.ts`     | Reads our contracts' logs (every deployed version) and reconciles rows                                |
+| `notify.ts`     | The only way into the feed: settings filter, insert (deduped by key), then email for away-events      |
+| `email.ts`      | Resend over HTTP, light HTML template; inert with no key, never throws                                |
+| `deposits.ts`   | "Maya sent you $25": incoming cash/stock transfers not explained by our own operations or contracts   |
+| `push.ts`       | Phone delivery (not written yet)                                                                      |
+| `posthog.ts`    | Money events from submit routes only; amounts as bands, people only by Privy id                       |
 
 `packages/sdk` holds the generated ABIs, `deployments.ts`, and the encoders for every call the
 server builds (`encodeCreateGift`, `encodeClaimGift`, …). No hand-encoded selectors.
@@ -429,7 +440,9 @@ server builds (`encodeCreateGift`, `encodeClaimGift`, …). No hand-encoded sele
   eth-infinitism's audited `Simple7702Account` for EntryPoint v0.8
   (`SIMPLE_7702_ACCOUNT` in `packages/sdk/src/deployments.ts`). The address stays the user's own,
   one signature covers a batch (`executeBatch`: permit/approve + action + fee), and
-  `HoldsakePaymaster` pays the gas. Bundler: Alchemy (`BUNDLER_URL`).
+  `HoldsakePaymaster` pays the gas. Alchemy (`BUNDLER_URL`) estimates and simulates; the server
+  sends each checked operation itself as a one-op `handleOps` from the ops wallet (see "Mainnet
+  deployment"), because Alchemy's bundler never mined ops carrying a 7702 authorization here.
 - The delegation target controls the user's whole account. Only ever that one pinned address;
   never a contract we wrote, never an address from user input. The submit route checks it.
 - Every on-chain action has the same three steps, like Morrow: the server builds the batch and
@@ -493,7 +506,7 @@ Written (`contracts/src`): `HoldsakeTokenList`, `HoldsakeGifts`, `HoldsakeFunds`
 `HoldsakePaymaster`, and `script/Deploy.s.sol` (never broadcast without the user's go-ahead; it
 doesn't fund the paymaster). 56 local tests (unit, fuzz, invariant, a local EntryPoint v0.8) and
 12 fork tests against the real TSLA, USDG and EntryPoint all pass. Not written, by decision:
-`HoldsakeLending` (borrow runs on Morpho).
+`HoldsakeLending` (borrow runs on Morpho). **v1 is live on mainnet** (see "Mainnet deployment").
 
 - `HoldsakeTokenList`: the allowlist both escrows read. `addToken(token)` only, by an
   `Ownable2Step` owner that must be a multisig (the deploy script refuses an EOA). Nothing can be
@@ -621,8 +634,8 @@ Also check, before sponsoring:
 | Funds                                  | Build (contract).                                                                |
 | Buy / sell                             | Build on Uniswap, USDG pairs.                                                    |
 | Send stocks, cash out                  | Build (plain ERC-20 transfer).                                                   |
-| Borrow against shares                  | Build on existing Morpho markets (see "Borrow on Morpho"). No contract of ours.  |
-| Earn on idle cash                      | Out of scope.                                                                    |
+| Borrow against shares                  | Built on Morpho (NVDA, AAPL, GOOGL, TSLA); see "Borrow on Morpho".               |
+| Earn (apys.co-style)                   | Built: cash into a Morpho USDG vault, interest claimed as shares (see "Earn").   |
 | Orders at a price                      | Blocked until a limit order protocol is confirmed on this chain.                 |
 | Notifications, watchlists, share cards | Build, same design as Morrow (`notify()`, local watchlists, canvas share cards). |
 | Private gift details                   | Not on this chain yet. Don't claim it in UI or copy.                             |
@@ -631,7 +644,10 @@ Also check, before sponsoring:
 
 - **Gas is charged at cost, quoted with a small buffer.** The fee is quoted before execution with
   15% headroom on ETH price and gas price, paid in USDG as one transfer to the treasury inside the
-  same batch, and not refunded after. Product copy says "at cost" only alongside "quoted with a
+  same batch, and not refunded after. It prices `expectedGasUsed(limits)` (85% of the
+  operation's gas limits, measured: a first gift burns 83%) at today's gas price, not
+  `maxFeePerGas`, rounded up to $0.001. Charging full limits at maxFeePerGas billed ~2× the real
+  cost (2026-10-09: $0.04 for a $0.021 gift); now it's ~1.4×, the two 15% buffers. Product copy says "at cost" only alongside "quoted with a
   small buffer"; never "exact cost".
 - **Who pays the fee, in order:**
   1. Cash the sender keeps after the gift (USDG not being sent).
@@ -643,6 +659,13 @@ Also check, before sponsoring:
   4. If none of that covers it, the gift is refused before signing with a plain message ("Not
      enough cash to cover the fee").
      The client mirrors this in the send screen; the server (`fees.ts`) is authoritative.
+- **Moving all of your cash still works.** Sending cash out and putting cash into Earn take the
+  fee from the cash left over; when that's short (sending or putting in everything), the
+  shortfall comes out of the amount itself, and the review shows what actually arrives.
+- **Opening a gift never needs money you don't have.** The fee comes from cash (yours or the
+  gift's), then from a gifted stock at its Chainlink price; if the gift is only stocks with no
+  feed, the batch sells a sliver of one through Uniswap (price-checked, minimum out, ~25% over
+  the spot amount) and pays the fee from that cash. What's left of the sale stays theirs.
 - Trading fee: integrator fee (`TRADE_FEE_BPS`) only where the venue supports it cleanly; never at
   the cost of a worse route.
 - Borrow: interest and any origination fee are shown up front in plain words before the user
@@ -678,14 +701,158 @@ plus ~$0.003 of L1 data: the 7702 gift batch (approve + `createGift` + fee) cost
 `MAX_GIFT_STOCKS` and `MAX_FUND_STOCKS` start at 3. Raising either means re-measuring and
 re-setting the paymaster's per-flow gas caps in the same change.
 
+## Mainnet deployment (v1, 2026-10-09)
+
+Deployed with `script/Deploy.s.sol` from the deployer `0x616e2B9Bc83D60790E70CbaAc6c8612AFc6A7896`
+(a Foundry keystore named `deployer`, password held by the user) at blocks 84043655–84043671.
+Transactions are in `contracts/broadcast/Deploy.s.sol/4663/run-latest.json`; addresses in
+`packages/sdk/src/deployments.ts` (the last entry per contract is the current version).
+
+| Contract            | Address                                      | Notes                                       |
+| ------------------- | -------------------------------------------- | ------------------------------------------- |
+| `HoldsakeTokenList` | `0xEe7c5B5a9eeAf667A6EFb217A8a77534C873f7a9` | USDG + all 194 stocks allowed, owner Safe   |
+| `HoldsakeGifts`     | `0x4b96E74B963efa7Ab7D7497854Fc87220Bd092C4` | cash = USDG                                 |
+| `HoldsakeFunds`     | `0x1515c22fDBa8CCa4B3610dEbCf8BEa8867055Bd7` |                                             |
+| `HoldsakePaymaster` | `0x04CD74e77ac145B18d61c6C8D7939e3241DBB60A` | EntryPoint v0.8, maxCostPerOp 0.0002 ETH    |
+| Owner (Safe 1.5.0)  | `0x812a47f8860ca05045C3Ad69FF0caea732f32922` | `OWNER_SAFE`; 1-of-1, the deployer is owner |
+
+- Every value above was read back on-chain after the deploy (owner, `isAllowed` for all 195
+  tokens, `tokenList`/`cash` wiring, paymaster `signer`, `maxCostPerOp`, `entryPoint`, `owner`).
+- Paymaster signer: `0x93673550b4a7E5ea02F090773AF706470003D96A`. Its key was generated straight
+  into `apps/app/.env` (`PAYMASTER_SIGNER_KEY`) and never printed; it exists only there and must
+  be copied to Vercel by the user. Losing it means a new paymaster (see "Env vars").
+- Cost: deploy 0.000178 ETH (8.88M gas at ~0.020 gwei), Safe creation ~0.000005 ETH, paymaster
+  deposit 0.0018 ETH (~90 sponsored gifts at ~$0.05). Demo scale on purpose; the user tops it up
+  (`deposit()` on the paymaster, payable by anyone) as usage grows.
+- Fees go to the deployer: `TREASURY_ADDRESS` is `0x616e…7896` in `apps/app/.env`.
+- Ops wallet `0x68AE979FEf3bd70d137D52A0B64C7A3d93e1dE91` (`OPS_PRIVATE_KEY`, generated straight
+  into `apps/app/.env`, never printed) is our own bundler: `submit` sends every operation as
+  `EntryPoint.handleOps([op], ops)`, with the user's 7702 authorization in the transaction's
+  authorization list on their first send. The EntryPoint repays it from the paymaster deposit,
+  so it only floats gas; `submit` refuses while it holds under 0.0001 ETH. It isn't the treasury,
+  so `/api/cron/paymaster-eth` doesn't run; the user tops up the deposit by hand.
+- An operation Alchemy accepted but never mined dies on its own: the paymaster signature in it
+  expires within minutes (AA32), so it can't land later next to a resend.
+- **Before real users**: raise the Safe to 2-of-3 with separate keys (Settings → Setup, address
+  unchanged), grow the deposit, move fees to a dedicated treasury or ops wallet, and test a
+  first-time 7702 delegation end to end (still untested, see below).
+- A new contract version deploys the same way and is appended to `deployments`; never remove an
+  old address while anything it holds is unsettled.
+
+## App: what's built (2026-10-09)
+
+- **Stock list**: `packages/sdk/src/stock-tokens.gen.ts`, 194 Stock Tokens: everything Robinhood's
+  token factory (`0x4783…c046`) created, each with runtime code byte-identical to TSLA's (which
+  embeds the beacon `0xe10b…1b00`), minus 10 with no supply and one test token.
+- **Markets**: `packages/sdk/src/stock-pools.gen.ts`, candidate Uniswap v4 pools per stock against
+  USDG, found by scanning every PoolManager `Initialize` event for Stock Tokens (101k pools, mostly
+  spam). Only hookless pools at a fee of at most 5% (`MAX_POOL_FEE`): many stocks only have real
+  depth at 2-5%, while lookalike pools charge 50-96% at made-up prices. 190 stocks have one; AEIS,
+  SATS, VTI and WEEK only trade in hooked or pricier pools and show without a price. A stock is
+  valued at its deepest live pool; a trade quotes every candidate and takes the best.
+- **Prices**: Chainlink where a feed exists (10 stocks), otherwise the pool's spot price for display
+  and valuation. A feed is read as USD per whole token with the multiplier in it; `pricePerShare`
+  divides by `uiMultiplier`. Fees taken in shares still need a fresh Chainlink price
+  (`chargeableFeed`); a pool price can be pushed around.
+- **Trades** (`lib/server/trades.ts`): exact-input single-pool swaps through Universal Router 2.1.2
+  with Permit2, quoted by V4Quoter, 1% slippage, refused when the price is more than 3% (plus the
+  pool's own fee, shown on the receipt) from Chainlink, or from the pool's spot price where there's
+  no feed. The swap input carries `minHopPriceX36` (0) between `amountOutMinimum` and
+  `hookData`: Universal Router 2.1.2's v4-periphery added it, and the older 5-field struct makes
+  the router revert with no reason (found and fixed on a fork, 2026-10-09). A full buy through
+  the app hasn't landed yet.
+- **Network note**: the public RPC's DNS is blocked by Indonesian ISPs (it resolves to
+  `aduankonten.id`); scripts reach it through its real Cloudflare IP with `curl --resolve`. Alchemy's
+  free tier caps `eth_getLogs` at 10 blocks, so scans run against the public RPC.
+- **Auth**: our own screens over Privy's headless hooks (email code, Google). No Privy modal.
+- **One submit route for every flow**: `POST /api/operations/$id/submit`. The browser sends only
+  its signatures; the server sends exactly the recorded draft (`lib/server/operations.ts`), after
+  checking the signer, the delegation target and the sponsorship window, and simulating.
+- **Signing in the browser** goes through Privy's `toViemAccount` on the embedded wallet, not
+  `useSign7702Authorization`/`useSignTypedData`: those require `useWallets().ready`, which Privy
+  (3.47 and 3.48) only sets after an external wallet connector initialises. With
+  `disableAllExternalWallets` there are none, so it never does ("Wallets are not ready"). Recheck
+  on a Privy upgrade before switching back.
+- **Approve, not permit**: inside a 7702 batch an exact-amount `approve` costs no extra
+  signature, while `permit` would need a second one.
+- **First-time delegation**: the paymaster hash uses the packed initCode (`0x7702` padded to 20
+  bytes). Alchemy's bundler also needs `factory` padded to 20 bytes (it rejects viem's 2-byte
+  `0x7702` as "wrong address length"); `paddedFactoryTransport` in `operations.ts` rewrites it.
+  viem hashes both forms the same. Server logs go through `logError`, which strips URLs: viem
+  puts the RPC URL, API key included, into its error text. Untested so far, on a fork or on mainnet; the fork test delegated beforehand. The first
+  gift from a fresh account is the test.
+- **UI loading**: `Spinner` (ldrs `Ring2`) for full-screen waits, `Skeleton`/`RowsSkeleton` for
+  lists, totals, the stock page and the chart; switching chart range dims the old line.
+- **Funds**: beneficiary is yourself or an existing @handle (an email would pregenerate an
+  account outside a gift). Contributions are shares the person holds; cash contributions wait
+  for trading.
+- **Notifications**: the feed polls every 30s and refetches balances and gifts when money arrives.
+  Deposits are found by `alchemy_getAssetTransfers` (Alchemy-only; another RPC provider turns the
+  scan off with a logged error), run from the portfolio and feed routes at most every 20s per
+  person, starting at the block of their first scan. Canonical tokens only (spam lookalikes are
+  sent to accounts); transfers in the person's own operations or from our contracts are skipped.
+  Emails go out for things that happen while you're away (gift received/opened/returned,
+  deposits, fund events), and to an email recipient who isn't on Holdsake yet when a gift lands.
+  Migration `20261009000000_deposit_notifications.sql` must be applied first.
+- **Borrow** (`lib/server/borrow.ts`, `/api/borrow/*`, `/borrow`, kinds `borrow_open`,
+  `borrow_repay`, `borrow_withdraw`, migration `20261009020000_borrow.sql`): we cap loans at
+  50% of the shares' value (Morpho allows 62.5%), so a stock falls ~20% from the most-borrowed
+  point before anything is sold. Shares to lock are worked out from the amount asked; repaying
+  everything repays by shares (approving a 0.1% interest margin, reset to 0 after); taking
+  shares back is refused if what stays wouldn't cover the loan at that line. Every loan shows
+  the fall %, the sell price per share and the penalty (1/(0.3·LLTV+0.7)−1 ≈ 12.7%). Lock,
+  borrow, 30 days, repay by shares and take back all ran on a fork with the user's account.
+- **Gift cards** (`lib/gift-cards.ts`, migration `20261009030000_gift_cards.sql`): every gift is
+  wrapped in a greeting card (birthday, angpao, lunar_new_year, lebaran, christmas, graduation,
+  wedding). Art is hand-drawn SVG in a flat paper-cut print style, three inks per card, no
+  gradients, emoji or stock icons; one source renders in the app and on the server.
+  `/api/gifts/$id/card.png` (satori + @resvg/resvg-js, Google Sans TTF fetched once) is the
+  link's `og:image` and the "Save card" download; it shows only the occasion and the two names,
+  never the amount or the message. `@vercel/og` was tried and dropped: its Node build fails with
+  "Dynamic require of fs".
+- **Not built yet**: crons, events sync, push, share cards, watchlists, cash
+  contributions to funds (they'd buy through the trade path).
+
+## Earn (built 2026-10-09, after apys.co)
+
+Cash goes into one Morpho Vault V2 over USDG (`EARN_VAULT` in `deployments.ts`) and stays the
+person's; what it grows by above what they put in is interest, claimed as shares of a stock they
+pick. Nothing moves without their signature, so claiming is a button, never a background buy.
+
+- **Vault: NetNet Credit (nnUSDG), the user's choice.** It lends to people borrowing against
+  Stock Tokens (SPCX, NVDA, AAPL, GOOGL, MSFT) plus wsNET. One multisig curates it, 10%
+  performance fee; ~21.7% net APY on 2026-10-09 because its markets ran at ~99.8% use, which also
+  meant only ~$4 could leave at once. The other sizeable USDG vault, Purinta, lends against meme
+  tokens (Pons, Cash Cat, Artificial Inu) and was turned down for that. Re-check the collateral
+  before switching vaults; a vault is one line in `deployments.ts`.
+- **Accounting** (`earn_positions`, migration `20261009010000_earn.sql`): `principal_raw` moves
+  by the cash that actually went into or came out of the vault in each confirmed operation (USDG
+  transfers wallet→vault and vault→wallet in its logs). Interest = `convertToAssets(shares)` −
+  principal. Withdrawals eat principal first.
+- **Flows** (`lib/server/earn.ts`, `/api/earn/*`, operation kinds `earn_deposit`,
+  `earn_withdraw`, `earn_claim`): deposit = approve + `deposit` + fee; withdraw = `withdraw`
+  (or `redeem` all shares, no dust) + fee from the cash that arrives; claim = `withdraw(interest)`
+  - `buyCalls` (shared with trades) + fee, from $0.25 of interest. Claims only buy stocks with a
+    Chainlink feed, so the price check has a real reference.
+- **Vault V2's `maxWithdraw`/`maxDeposit` always return 0.** Liquidity and APY come from
+  Morpho's API (`blue-api.morpho.org`, cached 5 min) for display and a plain refusal; an
+  unfillable withdrawal also fails its estimate before signing.
+- Checked on a fork 2026-10-09 with the user's real account: deposit $0.50 (381k gas), 30 days
+  of interest, partial withdraw (360k), redeem all (315k). Not yet done through the app.
+- The Earn screen says where interest comes from and what can go wrong (waits to withdraw, rate
+  moves, lending losses, share prices) in plain words; keep that section when changing it.
+
 ## Open decisions
 
 Write the answer here before building what depends on it.
 
-- **Which Morpho markets to offer.** List the Stock Token / USDG markets on `MORPHO_BLUE`, check
-  each oracle against the weekend gap, and pick the ones the borrow screen shows. Lending venue
-  itself is decided: Morpho, no contract of ours.
-- **Any fee on borrowing**, and how it's shown.
+- ~~Which Morpho markets to offer~~ **Decided 2026-10-09:** `BORROW_MARKETS` in `deployments.ts`
+  (NVDA, AAPL, GOOGL, TSLA at 62.5% LLTV). Each was read on-chain: USDG loan, canonical Stock
+  Token collateral, Morpho's Chainlink oracle on Chainlink proxies (same owner and aggregators as
+  `CHAINLINK_FEEDS`). The busy AAPL market (~99.8% used) has a non-standard oracle and isn't
+  offered. Chainlink stops over the weekend: the screens say so.
+- ~~Any fee on borrowing~~ **Decided:** only the usual gas fee at cost, no origination fee; the
+  rate is Morpho's, shown live and called variable.
 - **Brand accent colour** (`--primary` is a placeholder black).
 - **Landing page** stack and design.
 
