@@ -742,6 +742,19 @@ Transactions are in `contracts/broadcast/Deploy.s.sol/4663/run-latest.json`; add
 - A new contract version deploys the same way and is appended to `deployments`; never remove an
   old address while anything it holds is unsettled.
 
+## Vercel (2026-10-10)
+
+- Project `holdsake` on the **Freelancerz** team (Hobby plan), production at
+  https://holdsake.vercel.app. Not linked to GitHub: deploy with `vercel deploy --prod` from the
+  repo root (`.vercel/` is gitignored; the project's root directory is `apps/app`, Node 24.x).
+- Production env was copied from `apps/app/.env` (values never printed; `VERIFY_*` left out,
+  server keys marked sensitive) with `VITE_APP_URL=https://holdsake.vercel.app`.
+- **Hobby runs crons at most once a day** and refuses a deploy with an hourly schedule, so
+  `/api/cron/prices` runs daily; the short chart ranges fill in slowly until the plan or an
+  external scheduler allows hourly.
+- Privy needs `https://holdsake.vercel.app` in its allowed origins (and Google's redirect) or
+  sign-in fails there.
+
 ## App: what's built (2026-10-09)
 
 - **Stock list**: `packages/sdk/src/stock-tokens.gen.ts`, 194 Stock Tokens: everything Robinhood's
