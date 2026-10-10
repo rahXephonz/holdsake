@@ -1,6 +1,7 @@
 import { useLoginWithOAuth, usePrivy } from '@privy-io/react-auth'
 import { useNavigate } from '@tanstack/react-router'
 import { EnvelopeIcon } from '@phosphor-icons/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { EmailLogin } from '@/components/email-login'
 import { GiftCard } from '@/components/gift-card'
@@ -12,6 +13,7 @@ import { Avatar, StockLogo } from '@/components/stock-logo'
 import { useGiftPreviewQuery, useProfileQuery } from '@/lib/client/queries'
 import { useEnsureWallet } from '@/lib/client/wallet'
 import { formatShares, formatUsd } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 /**
  * Our own sign-in screens over Privy's headless hooks (email code and Google), so no Privy modal
@@ -111,17 +113,7 @@ export default function LoginScreen({ next }: { next?: string }) {
             </p>
           </div>
         ) : (
-          <>
-            <h1 className="text-5xl leading-[1.05] font-bold tracking-tight">
-              Give real
-              <br />
-              ownership.
-            </h1>
-            <p className="mt-5 text-lg text-muted-foreground">
-              Send shares of the companies you love to the people you love. They open it, they own
-              it.
-            </p>
-          </>
+          <Pitch />
         )}
       </div>
       <div className="flex flex-col gap-3">
@@ -142,6 +134,87 @@ export default function LoginScreen({ next }: { next?: string }) {
         <p className="mt-1 text-center text-xs text-muted-foreground">
           Not available to US persons or in restricted countries.
         </p>
+      </div>
+    </div>
+  )
+}
+
+// The welcome line cycles through what Holdsake is for. Each pair stays two lines at this size,
+// so swapping never moves the buttons below.
+const PITCHES = [
+  {
+    title: ['Give real', 'ownership.'],
+    body: 'Send shares of the companies you love to the people you love. They open it, they own it.',
+  },
+  {
+    title: ['Save up for', 'someone.'],
+    body: 'Start a goal fund, let family chip in, and it unlocks on the day you pick.',
+  },
+  {
+    title: ['Every day is', 'a gift day.'],
+    body: 'Birthdays, Lebaran, angpao or just because. Pick a card and send it in a minute.',
+  },
+] as const
+
+const PITCH_MS = 3800
+
+function Pitch() {
+  const still = useReducedMotion() ?? false
+  const [index, setIndex] = useState(0)
+  useEffect(() => {
+    const timer = window.setInterval(
+      () => setIndex((current) => (current + 1) % PITCHES.length),
+      PITCH_MS,
+    )
+    return () => window.clearInterval(timer)
+  }, [])
+  const pitch = PITCHES[index]!
+  // Reduced motion still changes the words, as a plain crossfade without movement
+  const hidden = still ? { opacity: 0 } : { opacity: 0, y: 24, filter: 'blur(6px)' }
+  const shown = still ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }
+  const gone = still ? { opacity: 0 } : { opacity: 0, y: -24, filter: 'blur(6px)' }
+  return (
+    <div>
+      <div className="relative min-h-[6.4rem] overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.h1
+            key={index}
+            className="text-5xl leading-[1.05] font-bold tracking-tight"
+            initial={hidden}
+            animate={shown}
+            exit={gone}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {pitch.title[0]}
+            <br />
+            {pitch.title[1]}
+          </motion.h1>
+        </AnimatePresence>
+      </div>
+      <div className="mt-5 min-h-[5.9rem]">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.p
+            key={index}
+            className="text-lg text-muted-foreground"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, delay: still ? 0 : 0.1 }}
+          >
+            {pitch.body}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+      <div className="mt-6 flex gap-1.5" aria-hidden="true">
+        {PITCHES.map((_, dot) => (
+          <span
+            key={dot}
+            className={cn(
+              'h-1.5 rounded-full transition-all duration-500',
+              dot === index ? 'w-6 bg-foreground' : 'w-1.5 bg-border',
+            )}
+          />
+        ))}
       </div>
     </div>
   )
