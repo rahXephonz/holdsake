@@ -1,5 +1,6 @@
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
+import { InstallPrompt } from '@/components/install-prompt'
 import { Providers } from '@/components/providers'
 
 import appCss from '@/styles.css?url'
@@ -20,6 +21,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { name: 'theme-color', content: '#ffffff' },
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
       { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+      { name: 'apple-mobile-web-app-title', content: 'Holdsake' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
     ],
     links: [
       // Google Sans and Inter (numbers) from Google Fonts. Valley Sans isn't there, so
@@ -32,6 +35,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       },
       { rel: 'stylesheet', href: appCss },
       { rel: 'manifest', href: '/manifest.webmanifest' },
+      // Icons live at fixed paths in public/icons (see public/icons/README.md)
+      { rel: 'icon', href: '/icons/icon-192.png', type: 'image/png' },
+      { rel: 'apple-touch-icon', href: '/icons/apple-touch-icon.png' },
     ],
   }),
   component: RootComponent,
@@ -43,17 +49,37 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Providers>
+        <InstallPrompt />
         <Outlet />
       </Providers>
     </QueryClientProvider>
   )
 }
 
+// Runs before React hydrates: the browser's install event fires once and early, and the service
+// worker only in production, so it never caches a dev server's modules
+const BOOT = `
+addEventListener('beforeinstallprompt', function (event) {
+  event.preventDefault()
+  window.holdsakeInstallPrompt = event
+})
+addEventListener('appinstalled', function () {
+  window.holdsakeInstalled = true
+  delete window.holdsakeInstallPrompt
+})
+${
+  import.meta.env.PROD
+    ? `if ('serviceWorker' in navigator) addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}) })`
+    : ''
+}
+`
+
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: BOOT }} />
       </head>
       <body>
         {children}

@@ -17,6 +17,7 @@ import { Route as EarnRouteImport } from './routes/earn'
 import { Route as GiftsRouteImport } from './routes/gifts'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SendRouteImport } from './routes/send'
@@ -101,6 +102,11 @@ const LoginRoute = LoginRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfflineRoute = OfflineRouteImport.update({
+  id: '/offline',
+  path: '/offline',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/gifts': typeof GiftsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/offline': typeof OfflineRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/send': typeof SendRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/gifts': typeof GiftsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/offline': typeof OfflineRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/send': typeof SendRoute
@@ -450,6 +458,7 @@ export interface FileRoutesById {
   '/gifts': typeof GiftsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/offline': typeof OfflineRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
   '/send': typeof SendRoute
@@ -507,6 +516,7 @@ export interface FileRouteTypes {
     | '/gifts'
     | '/login'
     | '/notifications'
+    | '/offline'
     | '/onboarding'
     | '/profile'
     | '/send'
@@ -562,6 +572,7 @@ export interface FileRouteTypes {
     | '/gifts'
     | '/login'
     | '/notifications'
+    | '/offline'
     | '/onboarding'
     | '/profile'
     | '/send'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '/gifts'
     | '/login'
     | '/notifications'
+    | '/offline'
     | '/onboarding'
     | '/profile'
     | '/send'
@@ -673,6 +685,7 @@ export interface RootRouteChildren {
   GiftsRoute: typeof GiftsRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
+  OfflineRoute: typeof OfflineRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
   SendRoute: typeof SendRoute
@@ -776,6 +789,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offline': {
+      id: '/offline'
+      path: '/offline'
+      fullPath: '/offline'
+      preLoaderRoute: typeof OfflineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -1105,6 +1125,7 @@ const rootRouteChildren: RootRouteChildren = {
   GiftsRoute: GiftsRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
+  OfflineRoute: OfflineRoute,
   OnboardingRoute: OnboardingRoute,
   ProfileRoute: ProfileRoute,
   SendRoute: SendRoute,

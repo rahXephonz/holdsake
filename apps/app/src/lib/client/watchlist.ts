@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
 
-// Watchlists stay on the device, like Morrow's: nothing to sync, no account needed to keep one,
+// Watchlists stay on the device: nothing to sync, no account needed to keep one,
 // and the server never learns what someone is eyeing. Clearing site data clears the list.
 
 const STORAGE_KEY = 'holdsake:watchlist'
