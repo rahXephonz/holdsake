@@ -3,6 +3,7 @@ import { getAddress, isAddressEqual, isHex, toHex, type Address, type Hex } from
 import { z } from 'zod'
 import { cashDecimals, findGiftAsset } from '@/lib/server/catalog'
 import { chain } from '@/lib/server/chain'
+import { cashReceivedEmail, stockReceivedEmail } from '@/lib/server/emails'
 import { required } from '@/lib/server/env'
 import { logError } from '@/lib/server/http'
 import { notify } from '@/lib/server/notify'
@@ -159,7 +160,8 @@ async function tell(userId: string, transfer: Transfer): Promise<void> {
   const dedupeKey = `deposit:${transfer.hash.toLowerCase()}:${transfer.token.toLowerCase()}`
 
   if (asset.kind === 'cash') {
-    const amount = formatUsd(Number(transfer.amountRaw) / 10 ** (await cashDecimals()))
+    const usd = Number(transfer.amountRaw) / 10 ** (await cashDecimals())
+    const amount = formatUsd(usd)
     await notify({
       userId,
       kind: 'cash_received',
@@ -167,13 +169,14 @@ async function tell(userId: string, transfer: Transfer): Promise<void> {
       body: 'It’s in your account now.',
       href: '/',
       dedupeKey,
+      email: cashReceivedEmail(usd, who),
     })
     return
   }
 
   const { stock } = asset
-  const shares =
-    (Number(transfer.amountRaw) / 10 ** stock.decimals) * (Number(stock.uiMultiplier) / 1e18)
+  const tokens = Number(transfer.amountRaw) / 10 ** stock.decimals
+  const shares = tokens * (Number(stock.uiMultiplier) / 1e18)
   const amount = `${formatShares(shares)} ${shares === 1 ? 'share' : 'shares'} of ${stock.name}`
   await notify({
     userId,
@@ -182,5 +185,12 @@ async function tell(userId: string, transfer: Transfer): Promise<void> {
     body: 'They’re in your account now.',
     href: `/stocks/${stock.ticker}`,
     dedupeKey,
+    email: stockReceivedEmail({
+      ticker: stock.ticker,
+      name: stock.name,
+      shares,
+      usd: stock.pricePerToken === null ? null : tokens * stock.pricePerToken,
+      from: who,
+    }),
   })
 }

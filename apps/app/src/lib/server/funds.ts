@@ -8,6 +8,7 @@ import {
   holdsakeFundsAbi,
 } from '@holdsake/sdk'
 import { parseEventLogs, getAddress, isAddressEqual, type Address } from 'viem'
+import { formatShares, formatUsd } from '@/lib/format'
 import {
   CASH_ADDRESS,
   cashDecimals,
@@ -16,6 +17,7 @@ import {
   type CatalogEntry,
 } from '@/lib/server/catalog'
 import { chain } from '@/lib/server/chain'
+import { fundContributionEmail } from '@/lib/server/emails'
 import { badRequest, forbidden, HttpError, notFound } from '@/lib/server/http'
 import { notify } from '@/lib/server/notify'
 import { buildOperation, type Call, type Submitted } from '@/lib/server/operations'
@@ -528,6 +530,7 @@ export async function afterFundOperation(
       .from('fund_contributions')
       .update({ status: 'confirmed', tx_hash: result.txHash })
       .eq('group_id', groupId)
+    const email = await contributionEmail(row, groupId)
     if (row.beneficiary_id)
       await notify({
         userId: row.beneficiary_id,
@@ -535,6 +538,7 @@ export async function afterFundOperation(
         title: `Someone added to ${row.name}`,
         body: 'Your fund just grew.',
         href: `/fund/${fundId}`,
+        email: email?.({ forBeneficiary: true }),
       })
     if (row.creator_id !== row.beneficiary_id)
       await notify({
@@ -543,8 +547,47 @@ export async function afterFundOperation(
         title: `${row.name} grew`,
         body: 'Someone added to the fund you started.',
         href: `/fund/${fundId}`,
+        email: email?.({ forBeneficiary: false }),
       })
     return
   }
   // A withdrawal leaves the fund open: anything added later can be taken out again
+}
+
+/** The email for one contribution (its rows share a group), written for either reader */
+async function contributionEmail(fund: FundRow, groupId: string) {
+  const { data: rows } = await db()
+    .from('fund_contributions')
+    .select('token, amount_raw, usd_value, contributor_name, note')
+    .eq('group_id', groupId)
+  const first = rows?.[0]
+  if (!first) return null
+  const assets = await Promise.all(
+    rows.map(async (contribution) => {
+      const stock = await findStock(contribution.token)
+      const usd = contribution.usd_value === null ? null : Number(contribution.usd_value)
+      const shares = stock
+        ? (Number(contribution.amount_raw) / 10 ** stock.decimals) *
+          (Number(stock.uiMultiplier) / 1e18)
+        : null
+      return {
+        ticker: stock?.ticker ?? null,
+        title: stock?.name ?? 'Cash',
+        detail: shares === null ? undefined : `${formatShares(shares)} shares`,
+        value: usd === null ? undefined : formatUsd(usd),
+      }
+    }),
+  )
+  const usd = rows.reduce((sum, contribution) => sum + Number(contribution.usd_value ?? 0), 0)
+  return ({ forBeneficiary }: { forBeneficiary: boolean }) =>
+    fundContributionEmail({
+      fundId: fund.id,
+      fundName: fund.name,
+      contributorName: first.contributor_name,
+      usd,
+      assets,
+      unlockAt: fund.unlock_at,
+      note: first.note,
+      forBeneficiary,
+    })
 }

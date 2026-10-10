@@ -407,31 +407,33 @@ rate limits, zod body).
 
 Server modules in `src/lib/server`:
 
-| Module          | Owns                                                                                                  |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| `http.ts`       | `route()` wrapper, `HttpError`, `badRequest`/`forbidden`/`notFound`, `readBody` (zod)                 |
-| `privy.ts`      | Access-token auth, wallet lookup, `walletForEmail` (creates) vs `findWalletForEmail` (read-only)      |
-| `users.ts`      | Profile rows, `requireUser`, onboarding state                                                         |
-| `recipients.ts` | `@handle`/email resolution, `resolveGiftRecipients`                                                   |
-| `rate-limit.ts` | Per-user and per-IP windows on recipient lookup, gift routes and sponsored operations                 |
-| `chain.ts`      | viem clients, bundler, `buildUserOp`, simulate, submit with retries, receipt and event parsing        |
-| `paymaster.ts`  | Sponsorship signatures (`userOpHash`, chain, expiry), per-flow gas caps, failed-op counter            |
-| `submit.ts`     | Decodes a signed user operation and checks it against the draft row (see "Submit checks")             |
-| `tokens.ts`     | ERC-20 reads, `decimals`, `uiMultiplier`, multicall balances                                          |
-| `catalog.ts`    | Robinhood asset registry, cached; `findStock`, `findGiftAsset` (USDG resolves like a stock)           |
-| `prices.ts`     | Chainlink `pricePerShare` and `pricePerRaw`; Uniswap quote fallback for display and trade checks only |
-| `charts.ts`     | Candles from an indexer or pool events, outlier filtering, cached in `price_candles`                  |
-| `trades.ts`     | Uniswap routing (USDG pairs first), 3% fair-price check against Chainlink, integrator fee             |
-| `fees.ts`       | Gas-at-cost fee math in USDG, fee payment plan (see "Money rules")                                    |
-| `gifts.ts`      | Gift rows (`gift_items` embedded) to `GiftView`, keyed by `(contract, onchain id)`                    |
-| `funds.ts`      | Fund rows, balances read from `HoldsakeFunds`, `toFundView`                                           |
-| `borrow.ts`     | Positions, health and "falls X% before sale"; same math as the contract or market, tested against it  |
-| `events.ts`     | Reads our contracts' logs (every deployed version) and reconciles rows                                |
-| `notify.ts`     | The only way into the feed: settings filter, insert (deduped by key), then email for away-events      |
-| `email.ts`      | Resend over HTTP, light HTML template; inert with no key, never throws                                |
-| `deposits.ts`   | "Maya sent you $25": incoming cash/stock transfers not explained by our own operations or contracts   |
-| `push.ts`       | Phone delivery (not written yet)                                                                      |
-| `posthog.ts`    | Money events from submit routes only; amounts as bands, people only by Privy id                       |
+| Module              | Owns                                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| `http.ts`           | `route()` wrapper, `HttpError`, `badRequest`/`forbidden`/`notFound`, `readBody` (zod)                 |
+| `privy.ts`          | Access-token auth, wallet lookup, `walletForEmail` (creates) vs `findWalletForEmail` (read-only)      |
+| `users.ts`          | Profile rows, `requireUser`, onboarding state                                                         |
+| `recipients.ts`     | `@handle`/email resolution, `resolveGiftRecipients`                                                   |
+| `rate-limit.ts`     | Per-user and per-IP windows on recipient lookup, gift routes and sponsored operations                 |
+| `chain.ts`          | viem clients, bundler, `buildUserOp`, simulate, submit with retries, receipt and event parsing        |
+| `paymaster.ts`      | Sponsorship signatures (`userOpHash`, chain, expiry), per-flow gas caps, failed-op counter            |
+| `submit.ts`         | Decodes a signed user operation and checks it against the draft row (see "Submit checks")             |
+| `tokens.ts`         | ERC-20 reads, `decimals`, `uiMultiplier`, multicall balances                                          |
+| `catalog.ts`        | Robinhood asset registry, cached; `findStock`, `findGiftAsset` (USDG resolves like a stock)           |
+| `prices.ts`         | Chainlink `pricePerShare` and `pricePerRaw`; Uniswap quote fallback for display and trade checks only |
+| `charts.ts`         | Candles from an indexer or pool events, outlier filtering, cached in `price_candles`                  |
+| `trades.ts`         | Uniswap routing (USDG pairs first), 3% fair-price check against Chainlink, integrator fee             |
+| `fees.ts`           | Gas-at-cost fee math in USDG, fee payment plan (see "Money rules")                                    |
+| `gifts.ts`          | Gift rows (`gift_items` embedded) to `GiftView`, keyed by `(contract, onchain id)`                    |
+| `funds.ts`          | Fund rows, balances read from `HoldsakeFunds`, `toFundView`                                           |
+| `borrow.ts`         | Positions, health and "falls X% before sale"; same math as the contract or market, tested against it  |
+| `events.ts`         | Reads our contracts' logs (every deployed version) and reconciles rows                                |
+| `notify.ts`         | The only way into the feed: settings filter, insert (deduped by key), then the caller's email, if any |
+| `email.ts`          | Resend over HTTP; inert with no key, never throws                                                     |
+| `email-template.ts` | The one email layout (card, hero amount, asset rows, receipt, note, button); imports nothing          |
+| `emails.ts`         | Every email's copy, one function per event; `pnpm --filter @holdsake/app emails` previews them        |
+| `deposits.ts`       | "Maya sent you $25": incoming cash/stock transfers not explained by our own operations or contracts   |
+| `push.ts`           | Phone delivery (not written yet)                                                                      |
+| `posthog.ts`        | Money events from submit routes only; amounts as bands, people only by Privy id                       |
 
 `packages/sdk` holds the generated ABIs, `deployments.ts`, and the encoders for every call the
 server builds (`encodeCreateGift`, `encodeClaimGift`, …). No hand-encoded selectors.

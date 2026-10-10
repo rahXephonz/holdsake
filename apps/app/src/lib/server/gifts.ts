@@ -18,7 +18,8 @@ import {
   findStock,
   isCash,
 } from '@/lib/server/catalog'
-import { appLink, sendEmail } from '@/lib/server/email'
+import { sendEmail } from '@/lib/server/email'
+import { giftOpenedEmail, giftReceivedEmail, giftReturnedEmail } from '@/lib/server/emails'
 import { badRequest, forbidden, HttpError, notFound } from '@/lib/server/http'
 import { notify } from '@/lib/server/notify'
 import type { Call, Submitted } from '@/lib/server/operations'
@@ -453,6 +454,15 @@ export async function afterGiftOperation(kind: string, giftId: string, result: S
       body: `Your gift to ${gift.recipient?.name ?? gift.recipient_email ?? 'them'} is on its way.`,
       href: `/gift/${giftId}`,
     })
+    // Valued from what arrived, the amounts just written; the contract sets the expiry
+    const facts = {
+      giftId,
+      senderName,
+      cardTheme: gift.card_theme,
+      items: await toItemViews((await loadGift(giftId)).gift_items),
+      message: gift.message,
+      expiresAt: new Date(Number(created.args.expiresAt) * 1000).toISOString(),
+    }
     if (gift.recipient_id)
       await notify({
         userId: gift.recipient_id,
@@ -460,23 +470,11 @@ export async function afterGiftOperation(kind: string, giftId: string, result: S
         title: `${senderName} sent you a gift`,
         body: gift.message ?? 'Open it to see what’s inside.',
         href: `/gift/${giftId}`,
+        email: giftReceivedEmail(facts),
       })
     // Not on Holdsake yet: email is the only way they'll hear about it
-    else if (gift.recipient_email) {
-      // The contract sets the expiry; read it rather than assume 30 days
-      const days = Math.round((Number(created.args.expiresAt) * 1000 - Date.now()) / 86_400_000)
-      await sendEmail({
-        to: gift.recipient_email,
-        subject: `${senderName} sent you a gift`,
-        heading: `${senderName} sent you a gift`,
-        quote: gift.message ?? undefined,
-        paragraphs: [
-          'Sign in to Holdsake with this email address to open it. Only you can.',
-          `If it isn’t opened within ${days} days, it goes back to ${senderName}.`,
-        ],
-        action: { label: 'Open your gift', href: appLink(`/gift/${giftId}`) },
-      })
-    }
+    else if (gift.recipient_email)
+      await sendEmail(gift.recipient_email, giftReceivedEmail(facts, gift.recipient_email))
     return
   }
 
@@ -489,6 +487,7 @@ export async function afterGiftOperation(kind: string, giftId: string, result: S
     await db().from('gift_items').update({ settled: true }).eq('gift_id', giftId).eq('index', index)
 
   const claimed = kind === 'gift_claim'
+  const items = await toItemViews(gift.gift_items)
   await db()
     .from('gifts')
     .update({
@@ -505,6 +504,10 @@ export async function afterGiftOperation(kind: string, giftId: string, result: S
       title: `${gift.recipient?.name ?? 'They'} opened your gift`,
       body: 'It’s theirs now.',
       href: `/gift/${giftId}`,
+      email: giftOpenedEmail(
+        { giftId, cardTheme: gift.card_theme, items },
+        gift.recipient?.name ?? 'They',
+      ),
     })
   else if (gift.recipient_id)
     await notify({
@@ -513,6 +516,7 @@ export async function afterGiftOperation(kind: string, giftId: string, result: S
       title: 'A gift went back',
       body: `${gift.sender?.name ?? 'The sender'} took back a gift you hadn’t opened.`,
       href: `/gift/${giftId}`,
+      email: giftReturnedEmail({ giftId, items }, gift.sender?.name ?? 'The sender'),
     })
 }
 

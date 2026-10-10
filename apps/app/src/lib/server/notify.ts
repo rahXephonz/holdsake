@@ -1,4 +1,5 @@
-import { appLink, sendEmail } from '@/lib/server/email'
+import { sendEmail } from '@/lib/server/email'
+import type { EmailContent } from '@/lib/server/email-template'
 import { logError } from '@/lib/server/http'
 import { db } from '@/lib/server/supabase'
 
@@ -32,7 +33,7 @@ const CATEGORY: Record<NotificationKind, 'gifts' | 'funds' | 'trades'> = {
 }
 
 // Worth an email: things that happen to you while you're away. What you did yourself (sent,
-// bought, sold) stays in the feed.
+// bought, sold) stays in the feed, even if a caller wrote an email for it.
 const EMAILED = new Set<NotificationKind>([
   'gift_received',
   'gift_opened',
@@ -46,7 +47,7 @@ const EMAILED = new Set<NotificationKind>([
 
 /**
  * The only way into the feed: respects the person's settings, inserts the row, then emails it
- * when it's worth one (inert with no key). Never throws: a missed notification mustn't fail the
+ * when the caller wrote an email and the kind is worth one (inert with no key). Never throws: a missed notification mustn't fail the
  * money flow that triggered it.
  */
 export async function notify(input: {
@@ -57,6 +58,11 @@ export async function notify(input: {
   href?: string
   /** Same key for the same person inserts once; for events more than one request can see */
   dedupeKey?: string
+  /**
+   * The same news written for an inbox. Leave it off and nothing is emailed: a feed line is a
+   * glance, an email is an interruption, so each one is written on purpose.
+   */
+  email?: EmailContent
 }): Promise<void> {
   try {
     const { data: settings } = await db()
@@ -83,20 +89,14 @@ export async function notify(input: {
     // An empty result means the dedupe key was already there: someone else sent this one
     if (!inserted?.length) return
 
-    if (!EMAILED.has(input.kind) || settings?.email === false) return
+    if (!input.email || !EMAILED.has(input.kind) || settings?.email === false) return
     const { data: user } = await db()
       .from('users')
       .select('email')
       .eq('id', input.userId)
       .maybeSingle()
     if (!user?.email) return
-    await sendEmail({
-      to: user.email,
-      subject: input.title,
-      heading: input.title,
-      paragraphs: [input.body],
-      action: { label: 'Open Holdsake', href: appLink(input.href ?? '/') },
-    })
+    await sendEmail(user.email, input.email)
   } catch (error) {
     logError(`notify failed (${input.kind})`, error)
   }
