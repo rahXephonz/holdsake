@@ -63,15 +63,17 @@ export default function AddCashScreen() {
 
       <section className="mt-6 flex flex-col items-center rounded-3xl bg-secondary px-6 pt-6 pb-5">
         <div className="rounded-2xl bg-white p-4">
-          {/* Plain address: what exchanges' scanners expect */}
+          {/* Plain address: what exchanges' scanners expect. The logo covers the middle, so the
+              code carries the highest error correction to stay readable around it */}
           <QRCodeSVG
             value={address}
             size={192}
-            level="M"
+            level="H"
             marginSize={0}
             bgColor="#ffffff"
             fgColor="#111111"
             title="Deposit address"
+            imageSettings={{ src: '/icons/logo.svg', width: 44, height: 44, excavate: true }}
           />
         </div>
         <span className="mt-4 flex items-center gap-2 rounded-full bg-background py-1 pr-3 pl-1 text-xs font-medium">
