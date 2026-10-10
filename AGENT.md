@@ -48,7 +48,7 @@ should quietly cost us money.
 | Landing         | Not decided. `apps/landing/` is an empty placeholder (see below)                                        |
 | Data fetching   | TanStack Query                                                                                          |
 | Styling         | Tailwind 4 + shadcn/ui on Base UI, per app; tokens and fonts in `packages/ui`                           |
-| Fonts           | Google Sans for text, Space Grotesk for numbers, Valley Sans for headings only (see "Design")           |
+| Fonts           | Google Sans for text, Inter for numbers, Valley Sans for headings only (see "Design")                   |
 | Auth / wallets  | Privy (`@privy-io/react-auth`, `@privy-io/node`), embedded EVM wallets                                  |
 | DB              | Supabase Postgres; service role on the server only                                                      |
 | Chain           | viem; typed ABIs generated from Foundry output with `@wagmi/cli`                                        |
@@ -201,7 +201,7 @@ not their brands: no logos, brand colours, `$cashtag` styling or copy from eithe
 **Type**
 
 - **Google Sans** for body, labels and buttons.
-- **Space Grotesk** for numbers: amounts, prices, changes, counts, codes. Always
+- **Inter** for numbers (Space Grotesk until 2026-10-10): amounts, prices, changes, counts, codes. Always
   `font-number tabular-nums` together (`--font-number`).
 - **Loaders**: `Spinner` (`@/components/ui/spinner`) wraps ldrs `Ring2`; skeletons for content
   that has a known shape (`Skeleton`, `RowsSkeleton`).
@@ -210,7 +210,7 @@ not their brands: no logos, brand colours, `$cashtag` styling or copy from eithe
   `prefers-reduced-motion`.
 - **Valley Sans** for headings only (screen titles, share-card heroes). Never
   for body text, numbers or buttons.
-- **Google Sans and Space Grotesk load from Google Fonts** (decided 2026-10-09, both OFL), linked
+- **Google Sans and Inter load from Google Fonts** (decided 2026-10-09, Inter since 2026-10-10, both OFL), linked
   in each app's root head. Valley Sans isn't on Google Fonts: it's self-hosted from
   `packages/ui/src/fonts` via `packages/ui/src/fonts.css` once the licensed woff2 is there, and
   headings fall back to Google Sans until then. All three are Tailwind theme tokens in
@@ -456,7 +456,10 @@ server builds (`encodeCreateGift`, `encodeClaimGift`, …). No hand-encoded sele
    balances, plans the fee, inserts one `gifts` row per recipient with its `gift_items`, and
    returns one user operation per recipient: `approve`/`permit` per item, `createGift`, at most
    one fee transfer, plus the paymaster signature.
-3. The browser signs (Privy, no UI) and calls `POST /api/gifts/[id]/submit`.
+3. The browser signs (Privy, no UI) and calls `POST /api/gifts/[id]/submit`. Several recipients
+   (up to `MAX_RECIPIENTS`, 3) each get their own gift, built and sent one at a time: every
+   operation reads the account's nonce when it's built, so building them all up front gives them
+   the same nonce and every one after the first fails.
 4. `submit` runs "Submit checks", sends, waits for the receipt, and stores the on-chain gift id
    from the `GiftCreated` event.
 5. Claim and take-back are the same shape: `POST /api/gifts/[id]/claim` or `/refund` builds,

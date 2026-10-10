@@ -94,11 +94,7 @@ export default function GiftScreen({ id }: { id: string }) {
           {formatUsd(data.totalUsd)}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          {done
-            ? action === 'claim'
-              ? 'It’s yours now'
-              : 'It’s claimed by you'
-            : giftStatus(data)}
+          {done ? (action === 'claim' ? 'It’s yours now' : 'Its return to you') : giftStatus(data)}
         </p>
         {done && (
           <motion.span

@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { BorrowHomeCard } from '@/components/screens/borrow-screen'
 import { EarnHomeCard } from '@/components/screens/earn-screen'
 import { unlockLabel } from '@/components/screens/funds-screen'
+import { StockRow } from '@/components/screens/stocks-screen'
 import { StockLogo } from '@/components/stock-logo'
 import { buttonVariants } from '@/components/ui/button'
 import {
@@ -24,8 +25,10 @@ import {
   useFundsQuery,
   useNotificationsQuery,
   usePortfolioQuery,
+  useStocksQuery,
 } from '@/lib/client/queries'
 import { useSession } from '@/lib/client/session'
+import { useWatchlist } from '@/lib/client/watchlist'
 import { formatShares, formatUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -63,7 +66,7 @@ export default function HomeScreen() {
       <GiftsWaiting gifts={gifts.data} now={now} />
 
       <section className="pt-6 pb-2 text-center">
-        <p className="text-sm text-muted-foreground">Total</p>
+        <p className="text-sm text-muted-foreground">Total Balance</p>
         {portfolio.isPending ? (
           <div className="flex justify-center pt-2" aria-hidden="true">
             <Skeleton className="h-12 w-48" />
@@ -127,6 +130,8 @@ export default function HomeScreen() {
         </div>
       )}
 
+      <WatchlistSection />
+
       <SectionTitle
         action={
           funds.data?.length ? (
@@ -169,6 +174,39 @@ export default function HomeScreen() {
         )}
       </div>
     </Screen>
+  )
+}
+
+const WATCHLIST_ON_HOME = 5
+
+/** Hidden until something is hearted; the full list has its own screen */
+function WatchlistSection() {
+  const { tickers } = useWatchlist()
+  const stocks = useStocksQuery()
+  if (!tickers.length) return null
+  const byTicker = new Map((stocks.data ?? []).map((stock) => [stock.ticker, stock]))
+  const watched = tickers.flatMap((ticker) => byTicker.get(ticker) ?? [])
+  return (
+    <>
+      <SectionTitle
+        action={
+          watched.length > WATCHLIST_ON_HOME ? (
+            <Link to="/watchlist" className="text-sm text-muted-foreground">
+              View all
+            </Link>
+          ) : undefined
+        }
+      >
+        Watchlist
+      </SectionTitle>
+      {stocks.isPending ? (
+        <RowsSkeleton rows={Math.min(tickers.length, WATCHLIST_ON_HOME)} />
+      ) : (
+        watched
+          .slice(0, WATCHLIST_ON_HOME)
+          .map((stock) => <StockRow key={stock.address} stock={stock} />)
+      )}
+    </>
   )
 }
 

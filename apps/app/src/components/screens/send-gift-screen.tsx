@@ -1,5 +1,6 @@
 import { USDG } from '@holdsake/sdk'
 import { Link } from '@tanstack/react-router'
+import { CheckIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
 import { AmountDisplay, Keypad } from '@/components/keypad'
 import { ListRow } from '@/components/list-row'
@@ -24,11 +25,23 @@ import {
 import { useSession } from '@/lib/client/session'
 import { formatShares, formatUsd } from '@/lib/format'
 import { HANDLE_PATTERN, normalizeHandle } from '@/lib/handles'
+import { cn } from '@/lib/utils'
+
+// Same limit as the gifts contract (MAX_GIFT_STOCKS); cash rides along as one more item
+const MAX_GIFT_STOCKS = 3
+// Same as the server's MAX_RECIPIENTS
+const MAX_RECIPIENTS = 3
 
 type Step = 'to' | 'what' | 'note' | 'review' | 'done'
 
 type Asset =
-  | { kind: 'cash'; token: string; decimals: number; balanceRaw: bigint; balanceUsd: number }
+  | {
+      kind: 'cash'
+      token: string
+      decimals: number
+      balanceRaw: bigint
+      balanceUsd: number
+    }
   | {
       kind: 'stock'
       token: string
@@ -58,9 +71,15 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
 
   const [step, setStep] = useState<Step>('to')
   const [to, setTo] = useState('')
+  // Everyone it's going to; each gets the same gift, sent as one gift per person
+  const [people, setPeople] = useState<Person[]>([])
   const [debouncedTo, setDebouncedTo] = useState('')
-  const [token, setToken] = useState<string | null | undefined>(undefined)
-  const [dollars, setDollars] = useState('0')
+  // What's in the gift, by key ('cash' or a ticker), in the order picked; a stock passed in the
+  // link starts picked and skips straight to its amount
+  const [picked, setPicked] = useState<string[]>(preselected ? [preselected] : [])
+  const [picking, setPicking] = useState(!preselected)
+  const [amountIndex, setAmountIndex] = useState(0)
+  const [amounts, setAmounts] = useState<Record<string, string>>({})
   const [message, setMessage] = useState('')
   const [cardTheme, setCardTheme] = useState<CardTheme>('birthday')
 
@@ -101,31 +120,36 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
     return list
   }, [portfolio.data])
 
-  // Until they pick, a stock passed in the link counts as picked
-  const chosen =
-    token === undefined
-      ? (assets.find((candidate) => candidate.kind === 'stock' && candidate.ticker === preselected)
-          ?.token ?? null)
-      : token
-  const asset = assets.find((candidate) =>
-    candidate.kind === 'cash' ? chosen === 'cash' : candidate.token === chosen,
-  )
-  const amountRaw = !asset
-    ? 0n
-    : asset.kind === 'cash'
-      ? cashRawFor(dollars, asset.decimals)
-      : stockRawFor(dollars, asset.pricePerToken, asset.decimals)
-  const overBalance = asset ? amountRaw > asset.balanceRaw : false
-  const items =
-    asset && amountRaw > 0n
-      ? [{ token: asset.kind === 'cash' ? USDG : asset.token, amountRaw: amountRaw.toString() }]
-      : []
-  const quote = useGiftQuoteQuery(step === 'review' ? items : [], 1)
-  const feeUsd = quote.data ? Number(quote.data.feeRaw) / 10 ** quote.data.decimals : null
+  const chosen = picked.flatMap((key) => assets.find((candidate) => keyOf(candidate) === key) ?? [])
+  const recipientLabel = joinNames(people.map((person) => person.name))
+  const count = Math.max(people.length, 1)
+  const lines = chosen.map((asset) => {
+    const dollars = amounts[keyOf(asset)] ?? '0'
+    const amountRaw =
+      asset.kind === 'cash'
+        ? cashRawFor(dollars, asset.decimals)
+        : stockRawFor(dollars, asset.pricePerToken, asset.decimals)
+    // Each person gets this much, so the balance has to cover it once per person
+    return {
+      asset,
+      dollars,
+      amountRaw,
+      over: amountRaw * BigInt(count) > asset.balanceRaw,
+    }
+  })
+  const eachDollars = lines.reduce((sum, line) => sum + Number(line.dollars), 0)
+  const totalDollars = eachDollars * count
+  const items = lines
+    .filter((line) => line.amountRaw > 0n)
+    .map((line) => ({
+      token: line.asset.kind === 'cash' ? USDG : line.asset.token,
+      amountRaw: line.amountRaw.toString(),
+    }))
+  const quote = useGiftQuoteQuery(step === 'review' ? items : [], count)
+  // The quote is per gift, and each person is one gift
+  const feeEachUsd = quote.data ? Number(quote.data.feeRaw) / 10 ** quote.data.decimals : null
 
   if (!session.ready) return <Loading />
-
-  const recipientLabel = recipient.data?.profile?.name ?? recipient.data?.label ?? to
 
   if (step === 'done')
     return (
@@ -148,36 +172,79 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
             ) : undefined
           }
         >
-          {recipientLabel} has 30 days to open it. You can take it back until they do.
+          {count > 1
+            ? `${recipientLabel} each have 30 days to open theirs. You can take one back until it’s opened.`
+            : `${recipientLabel} has 30 days to open it. You can take it back until they do.`}
         </SuccessState>
       </Screen>
     )
 
   if (step === 'to') {
-    const ready = recipientInput !== null && recipient.data?.found === true && debouncedTo === to
+    const lookupReady =
+      recipientInput !== null && recipient.data?.found === true && debouncedTo === to
+    const lookupKey = recipientInput ? personKey(recipientInput) : null
+    const alreadyAdded = people.some((person) => person.key === lookupKey)
+    const full = people.length >= MAX_RECIPIENTS
+    const add = () => {
+      if (!recipientInput || !recipient.data?.found || alreadyAdded || full) return
+      setPeople((current) => [
+        ...current,
+        {
+          key: personKey(recipientInput),
+          input: recipientInput,
+          name: recipient.data?.profile?.name ?? recipient.data?.label ?? to.trim(),
+          avatarUrl: recipient.data?.profile?.avatarUrl ?? null,
+          subtitle: recipient.data?.profile
+            ? `@${recipient.data.profile.handle}`
+            : 'They’ll sign in with this email to open it',
+        },
+      ])
+      setTo('')
+      setDebouncedTo('')
+    }
+    // Typed someone and went straight to Next: they count too
+    const canAdd = lookupReady && !alreadyAdded && !full
     return (
       <Screen
         back="/"
         title="Send a gift"
         footer={
-          <Button size="xl" disabled={!ready} onClick={() => setStep('what')}>
+          <Button
+            size="xl"
+            disabled={people.length === 0 && !canAdd}
+            onClick={() => {
+              if (canAdd) add()
+              setStep('what')
+            }}
+          >
             Next
           </Button>
         }
       >
-        <Input
-          value={to}
-          onChange={(event) => setTo(event.target.value)}
-          placeholder="@username or email"
-          aria-label="Who is it for?"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          className="mt-2 h-14 rounded-2xl border-0 bg-secondary px-4 text-lg"
-        />
-        <div className="mt-4">
-          {recipientInput && recipient.data && (
+        {!full && (
+          <Input
+            value={to}
+            onChange={(event) => setTo(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && canAdd) add()
+            }}
+            placeholder="@username or email"
+            aria-label="Who is it for?"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            className="mt-2 h-14 rounded-2xl border-0 bg-secondary px-4 text-lg"
+          />
+        )}
+        <p className="mt-2 text-sm text-muted-foreground">
+          {full
+            ? `That’s everyone: a gift goes to ${MAX_RECIPIENTS} people at most.`
+            : `Up to ${MAX_RECIPIENTS} people. Each gets the same gift.`}
+        </p>
+        <div className="mt-2">
+          {recipientInput && recipient.data && debouncedTo === to && !alreadyAdded && !full && (
             <ListRow
+              onClick={recipient.data.found ? add : undefined}
               leading={
                 <Avatar
                   name={recipient.data.profile?.name ?? recipient.data.label}
@@ -192,17 +259,62 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
                     : 'They’ll sign in with this email to open it'
                   : 'No one here by that name yet'
               }
+              value={
+                recipient.data.found ? <PlusIcon className="size-5" aria-label="Add" /> : undefined
+              }
             />
           )}
+          {people.map((person) => (
+            <ListRow
+              key={person.key}
+              leading={<Avatar name={person.name} url={person.avatarUrl} />}
+              title={person.name}
+              subtitle={person.subtitle}
+              value={
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPeople((current) => current.filter((item) => item.key !== person.key))
+                  }
+                  aria-label={`Remove ${person.name}`}
+                  className="flex size-9 items-center justify-center rounded-full hover:bg-muted"
+                >
+                  <XIcon className="size-4" />
+                </button>
+              }
+            />
+          ))}
         </div>
       </Screen>
     )
   }
 
   if (step === 'what') {
-    if (!asset)
+    if (picking || chosen.length === 0) {
+      const stocksPicked = chosen.filter((asset) => asset.kind === 'stock').length
+      const toggle = (key: string) =>
+        setPicked((current) =>
+          current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+        )
       return (
-        <Screen back="/" title="What to give">
+        <Screen
+          back="/"
+          title="What to give"
+          footer={
+            assets.length > 0 && (
+              <Button
+                size="xl"
+                disabled={chosen.length === 0}
+                onClick={() => {
+                  setPicking(false)
+                  setAmountIndex(0)
+                }}
+              >
+                Next
+              </Button>
+            )
+          }
+        >
           {portfolio.isPending ? (
             <RowsSkeleton rows={3} />
           ) : assets.length === 0 ? (
@@ -212,7 +324,10 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
               action={
                 <Link
                   to="/add-cash"
-                  className={buttonVariants({ variant: 'secondary', size: 'lg' })}
+                  className={buttonVariants({
+                    variant: 'secondary',
+                    size: 'lg',
+                  })}
                 >
                   Add cash
                 </Link>
@@ -220,41 +335,81 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
             />
           ) : (
             <div className="pb-6">
-              {assets.map((candidate) => (
-                <ListRow
-                  key={candidate.kind === 'cash' ? 'cash' : candidate.token}
-                  onClick={() => setToken(candidate.kind === 'cash' ? 'cash' : candidate.token)}
-                  leading={
-                    candidate.kind === 'cash' ? (
+              <p className="pt-2 pb-2 text-sm text-muted-foreground">
+                Pick up to {MAX_GIFT_STOCKS} stocks, and cash if you like.
+              </p>
+              {assets.map((candidate) => {
+                const key = keyOf(candidate)
+                const selected = picked.includes(key)
+                // The gift holds a few stocks at most; cash is always one more
+                const full =
+                  !selected && candidate.kind === 'stock' && stocksPicked >= MAX_GIFT_STOCKS
+                return (
+                  <label
+                    key={key}
+                    className={cn(
+                      '-mx-2 flex cursor-pointer items-center gap-3 rounded-2xl px-2 py-3 hover:bg-muted/60 has-focus-visible:ring-2 has-focus-visible:ring-ring',
+                      full && 'cursor-not-allowed opacity-40',
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      disabled={full}
+                      onChange={() => toggle(key)}
+                      className="sr-only"
+                    />
+                    {candidate.kind === 'cash' ? (
                       <StockLogo ticker="$" />
                     ) : (
                       <StockLogo ticker={candidate.ticker} logoUrl={candidate.logoUrl} />
-                    )
-                  }
-                  title={candidate.kind === 'cash' ? 'Cash' : candidate.name}
-                  subtitle={
-                    candidate.kind === 'cash'
-                      ? 'Dollars they can spend or invest'
-                      : `${formatShares(candidate.shares)} shares`
-                  }
-                  value={formatUsd(candidate.balanceUsd)}
-                />
-              ))}
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">
+                        {candidate.kind === 'cash' ? 'Cash' : candidate.name}
+                      </div>
+                      <div className="truncate font-number text-sm text-muted-foreground">
+                        {candidate.kind === 'cash'
+                          ? `${formatUsd(candidate.balanceUsd)} · dollars they can spend or invest`
+                          : `${formatShares(candidate.shares)} shares · ${formatUsd(candidate.balanceUsd)}`}
+                      </div>
+                    </div>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'flex size-6 shrink-0 items-center justify-center rounded-full border-2',
+                        selected
+                          ? 'border-foreground bg-foreground text-background'
+                          : 'border-border',
+                      )}
+                    >
+                      {selected && <CheckIcon weight="bold" className="size-3.5" />}
+                    </span>
+                  </label>
+                )
+              })}
             </div>
           )}
         </Screen>
       )
+    }
 
-    const maxDollars = Math.floor(asset.balanceUsd * 100) / 100
+    const line = lines[Math.min(amountIndex, lines.length - 1)]!
+    const { asset, dollars, amountRaw, over } = line
+    const key = keyOf(asset)
+    const setDollars = (value: string) => setAmounts((current) => ({ ...current, [key]: value }))
+    const last = amountIndex >= lines.length - 1
+    const maxDollars = Math.floor((asset.balanceUsd / count) * 100) / 100
+    const name = asset.kind === 'cash' ? 'Cash' : asset.name
     return (
       <Screen
         back="/"
-        title={asset.kind === 'cash' ? 'Cash' : asset.name}
+        title={lines.length > 1 ? `${name} · ${amountIndex + 1} of ${lines.length}` : name}
         footer={
           <Button
             size="xl"
-            disabled={amountRaw === 0n || overBalance}
-            onClick={() => setStep('note')}
+            disabled={amountRaw === 0n || over}
+            onClick={() => (last ? setStep('note') : setAmountIndex(amountIndex + 1))}
           >
             Next
           </Button>
@@ -264,19 +419,31 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
           <AmountDisplay
             value={dollars}
             hint={
-              overBalance ? (
-                <span className="text-destructive">You have {formatUsd(asset.balanceUsd)}</span>
+              over ? (
+                <span className="text-destructive">
+                  {count > 1
+                    ? `You have ${formatUsd(asset.balanceUsd)}, ${formatUsd(maxDollars)} each`
+                    : `You have ${formatUsd(asset.balanceUsd)}`}
+                </span>
               ) : asset.kind === 'stock' && amountRaw > 0n ? (
-                `${formatShares(sharesFor(asset, amountRaw))} shares of ${asset.ticker}`
+                `${formatShares(sharesFor(asset, amountRaw))} shares of ${asset.ticker}${count > 1 ? ' each' : ''}`
+              ) : count > 1 ? (
+                `Each person · ${formatUsd(asset.balanceUsd)} available`
               ) : (
                 `${formatUsd(asset.balanceUsd)} available`
               )
             }
           />
           <div className="mb-4 flex justify-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setToken(null)}>
-              Change
-            </Button>
+            {amountIndex > 0 ? (
+              <Button variant="secondary" size="sm" onClick={() => setAmountIndex(amountIndex - 1)}>
+                Previous
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm" onClick={() => setPicking(true)}>
+                Change
+              </Button>
+            )}
             <Button variant="secondary" size="sm" onClick={() => setDollars(maxDollars.toFixed(2))}>
               Max
             </Button>
@@ -314,9 +481,13 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
     )
 
   const submit = () =>
-    recipientInput &&
     send.mutate(
-      { recipients: [recipientInput], items, message: message.trim() || null, cardTheme },
+      {
+        recipients: people.map((person) => person.input),
+        items,
+        message: message.trim() || null,
+        cardTheme,
+      },
       { onSuccess: () => setStep('done') },
     )
 
@@ -330,46 +501,82 @@ export default function SendGiftScreen({ stock: preselected }: { stock?: string 
             <p className="mb-3 text-center text-sm text-destructive">{errorMessage(send.error)}</p>
           )}
           <Button size="xl" disabled={send.isPending || items.length === 0} onClick={submit}>
-            {send.isPending ? 'Sending…' : `Send ${formatUsd(Number(dollars))}`}
+            {send.isPending ? 'Sending…' : `Send ${formatUsd(totalDollars)}`}
           </Button>
         </>
       }
     >
       <GiftCard
         theme={cardTheme}
-        recipientName={recipient.data?.profile?.name ?? null}
+        recipientName={people.length ? recipientLabel : null}
         senderName={session.profile?.name ?? 'You'}
         message={message.trim() || null}
         className="mt-2"
       />
       <p className="pt-5 pb-4 text-center font-number text-5xl font-bold tracking-tight tabular-nums">
-        {formatUsd(Number(dollars))}
+        {formatUsd(totalDollars)}
       </p>
       <Receipt
         rows={[
           { label: 'To', value: recipientLabel },
           {
-            label: 'Gift',
-            value:
-              asset?.kind === 'stock'
-                ? `${formatShares(sharesFor(asset, amountRaw))} ${asset.ticker}`
-                : 'Cash',
+            label: count > 1 ? 'Each gets' : 'Gift',
+            value: (
+              <div className="flex flex-col gap-1">
+                {lines.map(({ asset, dollars, amountRaw }) => (
+                  <span key={keyOf(asset)}>
+                    {asset.kind === 'stock'
+                      ? `${formatShares(sharesFor(asset, amountRaw))} ${asset.ticker}`
+                      : 'Cash'}
+                    {lines.length > 1 && (
+                      <span className="text-muted-foreground"> · {formatUsd(Number(dollars))}</span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            ),
           },
           ...(message.trim() ? [{ label: 'Note', value: message.trim() }] : []),
           {
             label: 'Fee',
-            value: feeUsd === null ? '…' : `about ${formatUsd(feeUsd)}`,
+            value:
+              feeEachUsd === null
+                ? '…'
+                : count > 1
+                  ? `about ${formatUsd(feeEachUsd * count)} (${formatUsd(feeEachUsd)} each)`
+                  : `about ${formatUsd(feeEachUsd)}`,
           },
         ]}
       />
       <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
-        Only {recipientLabel} can open it. If they don’t within 30 days, it comes back to you, and
-        you can take it back any time before they open it. The fee covers what sending costs us, at
-        cost with a small buffer. It comes from your cash first.
+        {count > 1
+          ? `Each person gets their own gift, and only they can open it. Any they don’t open within 30 days come back to you, and you can take one back any time before it’s opened.`
+          : `Only ${recipientLabel} can open it. If they don’t within 30 days, it comes back to you, and you can take it back any time before they open it.`}{' '}
+        The fee covers what sending costs us, at cost with a small buffer. It comes from your cash
+        first.
       </p>
     </Screen>
   )
 }
+
+type Person = {
+  key: string
+  input: RecipientInput
+  name: string
+  avatarUrl: string | null
+  subtitle: string
+}
+
+const personKey = (input: RecipientInput) => ('handle' in input ? `@${input.handle}` : input.email)
+
+/** "Maya", "Maya and Budi", "Maya, Budi and Sari" */
+function joinNames(names: string[]) {
+  if (names.length <= 1) return names[0] ?? ''
+  return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+}
+
+/** Stable key for a pickable asset: 'cash', or the stock's ticker (what links pass in) */
+const keyOf = (asset: Asset) => (asset.kind === 'cash' ? 'cash' : asset.ticker)
 
 /** Underlying shares for a raw amount, in proportion to what the holding reports */
 function sharesFor(asset: Extract<Asset, { kind: 'stock' }>, amountRaw: bigint): number {

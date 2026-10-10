@@ -1,6 +1,7 @@
 import { usePrivy } from '@privy-io/react-auth'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
+import { AvatarPicker } from '@/components/avatar-picker'
 import { Loading, Screen } from '@/components/screen'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -77,6 +78,15 @@ export default function OnboardingScreen({ next }: { next?: string }) {
       <p className="mt-2 text-muted-foreground">People find you by your @name to send you gifts.</p>
 
       <div className="mt-8 flex flex-col gap-6">
+        <div className="flex flex-col items-center gap-1">
+          <AvatarPicker name={name} url={session.profile.avatarUrl} size={88} removable />
+          <p className="text-sm text-muted-foreground">
+            {session.profile.avatarUrl
+              ? 'This shows on gifts you send.'
+              : 'Add a photo, if you like. It shows on gifts you send.'}
+          </p>
+        </div>
+
         <div className="flex flex-col gap-2">
           <Label htmlFor="name">Your name</Label>
           <Input

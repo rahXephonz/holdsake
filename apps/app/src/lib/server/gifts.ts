@@ -32,10 +32,10 @@ import { balancesOf } from '@/lib/server/tokens'
 import { treasury } from '@/lib/server/treasury'
 import type { UserRow } from '@/lib/server/users'
 import { cardOf, type CardTheme } from '@/lib/gift-cards'
-import type { GiftPreview, GiftView } from '@/lib/types'
+import type { GiftItemView, GiftPreview, GiftView } from '@/lib/types'
 
 export const MAX_GIFT_STOCKS = 3
-export const MAX_RECIPIENTS = 5
+export const MAX_RECIPIENTS = 3
 
 /** Stocks plus at most one cash item; amounts in raw units as decimal strings */
 export const giftItemsSchema = z
@@ -251,18 +251,11 @@ export async function loadGift(id: string): Promise<GiftRow> {
   return data
 }
 
-export async function toGiftView(row: GiftRow, viewer: UserRow): Promise<GiftView> {
-  const viewerWallet = viewer.wallet_address?.toLowerCase()
-  const role =
-    row.sender_id === viewer.id
-      ? 'sender'
-      : row.recipient_wallet === viewerWallet
-        ? 'recipient'
-        : null
-  if (!role) throw forbidden('This gift isn’t for you.')
+/** What's inside a gift, valued now; shared by the gift page and the link preview */
+async function toItemViews(items: GiftRow['gift_items']): Promise<GiftItemView[]> {
   const decimals = await cashDecimals()
-  const items = await Promise.all(
-    row.gift_items
+  return Promise.all(
+    items
       .toSorted((a, b) => a.index - b.index)
       .map(async (item) => {
         if (isCash(item.token)) {
@@ -292,6 +285,18 @@ export async function toGiftView(row: GiftRow, viewer: UserRow): Promise<GiftVie
         }
       }),
   )
+}
+
+export async function toGiftView(row: GiftRow, viewer: UserRow): Promise<GiftView> {
+  const viewerWallet = viewer.wallet_address?.toLowerCase()
+  const role =
+    row.sender_id === viewer.id
+      ? 'sender'
+      : row.recipient_wallet === viewerWallet
+        ? 'recipient'
+        : null
+  if (!role) throw forbidden('This gift isn’t for you.')
+  const items = await toItemViews(row.gift_items)
   const expired = row.expires_at ? new Date(row.expires_at).getTime() <= Date.now() : false
   return {
     id: row.id,
@@ -512,16 +517,17 @@ export async function afterGiftOperation(kind: string, giftId: string, result: S
 }
 
 /**
- * What anyone holding a gift's link may see before signing in: who it's from and whether it's
- * still waiting. Never the amount, the stocks or the message: the link travels through chats,
- * and the surprise is the recipient's.
+ * What anyone holding a gift's link may see before signing in: who it's from, the card, what's
+ * inside and whether it's still waiting. What's inside is public on-chain anyway; the note isn't
+ * (it lives only in our database), so it stays behind sign-in. The unfurled card image still
+ * shows neither, since that one lands in group chats.
  */
 export async function giftPreview(id: string): Promise<GiftPreview | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null
   const { data, error } = await db()
     .from('gifts')
     .select(
-      'status, expires_at, card_theme, sender:users!gifts_sender_id_fkey(name, avatar_path), recipient:users!gifts_recipient_id_fkey(name)',
+      'status, expires_at, card_theme, gift_items(index, token, amount_raw, settled), sender:users!gifts_sender_id_fkey(name, avatar_path), recipient:users!gifts_recipient_id_fkey(name)',
     )
     .eq('id', id)
     .neq('status', 'draft')
@@ -531,6 +537,7 @@ export async function giftPreview(id: string): Promise<GiftPreview | null> {
         status: GiftView['status']
         expires_at: string | null
         card_theme: string
+        gift_items: GiftRow['gift_items']
         sender: { name: string | null; avatar_path: string | null } | null
         recipient: { name: string | null } | null
       } | null,
@@ -543,6 +550,13 @@ export async function giftPreview(id: string): Promise<GiftPreview | null> {
     // Recipients by email have no name yet; the card says "for you" rather than the address
     recipientName: data.recipient?.name ?? null,
     cardTheme: cardOf(data.card_theme).theme,
+    items: (await toItemViews(data.gift_items)).map(({ kind, ticker, name, shares, usdValue }) => ({
+      kind,
+      ticker,
+      name,
+      shares,
+      usdValue,
+    })),
     waiting:
       (data.status === 'pending' || data.status === 'opened') &&
       (!data.expires_at || Date.parse(data.expires_at) > Date.now()),

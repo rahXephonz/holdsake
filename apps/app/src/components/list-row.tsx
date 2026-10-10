@@ -29,7 +29,9 @@ export function ListRow({
       {leading}
       <div className="min-w-0 flex-1">
         <div className="truncate font-medium">{title}</div>
-        {subtitle && <div className="truncate text-sm text-muted-foreground">{subtitle}</div>}
+        {subtitle && (
+          <div className="truncate font-number text-sm text-muted-foreground">{subtitle}</div>
+        )}
       </div>
       {(value !== undefined || valueSub !== undefined) && (
         <div className="text-right font-number tabular-nums">

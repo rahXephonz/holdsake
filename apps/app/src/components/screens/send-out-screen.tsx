@@ -66,7 +66,7 @@ export default function SendOutScreen({
   // What arrives can be less than typed when the fee has to come out of the send itself
   const cashOf = (raw: string) => Number(raw) / 10 ** (cash?.decimals ?? 6)
   const sent = prepare.data ? cashOf(prepare.data.send.sentRaw) : null
-  const feeFromSend = mode === 'cash' && sent !== null && sent < Number(dollars) - 0.0005
+  const cashFeeFromSend = mode === 'cash' && sent !== null && sent < Number(dollars) - 0.0005
   if (mode === 'stock' && !holding)
     return (
       <Screen back={back} title={title}>
@@ -98,10 +98,15 @@ export default function SendOutScreen({
       : stockRawFor(dollars, holding!.stock.pricePerToken ?? 0, decimals)
   const token = mode === 'cash' ? USDG : holding!.stock.address
   const over = amountRaw > balanceRaw
-  const shares =
-    mode === 'stock' && balanceRaw > 0n
-      ? (Number(amountRaw) / Number(balanceRaw)) * holding!.shares
-      : 0
+  const sharesOf = (raw: bigint) =>
+    mode === 'stock' && balanceRaw > 0n ? (Number(raw) / Number(balanceRaw)) * holding!.shares : 0
+  const shares = sharesOf(amountRaw)
+  // Shares that actually arrive, when the fee came out of them
+  const sentShares =
+    mode === 'stock' && prepare.data && BigInt(prepare.data.send.sentRaw) < amountRaw
+      ? sharesOf(BigInt(prepare.data.send.sentRaw))
+      : null
+  const feeFromSend = cashFeeFromSend || sentShares !== null
 
   if (step === 'done')
     return (
@@ -122,7 +127,7 @@ export default function SendOutScreen({
                     ? { label: 'Sent', value: formatUsd(sent ?? Number(dollars)) }
                     : {
                         label: 'Sent',
-                        value: `${formatShares(shares)} ${holding?.stock.ticker ?? ''}`,
+                        value: `${formatShares(sentShares ?? shares)} ${holding?.stock.ticker ?? ''}`,
                       },
                   {
                     label: 'To',
@@ -338,6 +343,9 @@ export default function SendOutScreen({
           ...(mode === 'cash' && sent !== null
             ? [{ label: 'They get', value: formatUsd(sent) }]
             : []),
+          ...(sentShares !== null
+            ? [{ label: 'They get', value: `${formatShares(sentShares)} ${holding!.stock.ticker}` }]
+            : []),
           {
             label: 'Fee',
             value: prepare.data ? formatUsd(cashOf(prepare.data.send.feeRaw)) : '…',
@@ -347,7 +355,9 @@ export default function SendOutScreen({
       <p className="mt-6 text-sm text-muted-foreground">
         The fee covers what sending costs us, at cost with a small buffer.{' '}
         {feeFromSend
-          ? 'Your other cash doesn’t cover it, so it comes out of what you send.'
+          ? mode === 'cash'
+            ? 'Your other cash doesn’t cover it, so it comes out of what you send.'
+            : 'You don’t have enough left over to cover it, so it comes out of the shares you send.'
           : 'It comes from your cash, or from these shares if your cash is short.'}
       </p>
     </Screen>

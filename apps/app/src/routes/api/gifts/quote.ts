@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { cashDecimals } from '@/lib/server/catalog'
 import { expectedGasUsed, gasFeeInCash } from '@/lib/server/fees'
-import { giftItemsSchema, validateGiftItems } from '@/lib/server/gifts'
+import { giftItemsSchema, MAX_RECIPIENTS, validateGiftItems } from '@/lib/server/gifts'
 import { json, readBody, route } from '@/lib/server/http'
 import { chain } from '@/lib/server/chain'
 import { enforceRateLimit } from '@/lib/server/rate-limit'
@@ -28,7 +28,10 @@ export const Route = createFileRoute('/api/gifts/quote')({
         enforceRateLimit(user.id, 'giftQuote')
         const body = await readBody(
           request,
-          z.object({ items: giftItemsSchema, recipients: z.number().int().min(1).max(5) }),
+          z.object({
+            items: giftItemsSchema,
+            recipients: z.number().int().min(1).max(MAX_RECIPIENTS),
+          }),
         )
         await validateGiftItems(body.items)
         const gasPrice = await chain().getGasPrice()

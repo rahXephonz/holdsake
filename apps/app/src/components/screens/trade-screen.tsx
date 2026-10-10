@@ -177,7 +177,10 @@ export default function TradeScreen({ ticker, side }: { ticker: string; side: 'b
           rows={
             side === 'buy'
               ? [
-                  { label: 'You pay', value: formatUsd(cashOf(quote.spendRaw)) },
+                  {
+                    label: 'You pay',
+                    value: formatUsd(cashOf(quote.spendRaw)),
+                  },
                   {
                     label: 'You get about',
                     value: `${formatShares(sharesOf(BigInt(quote.receiveRaw)))} ${data.ticker}`,
@@ -194,8 +197,14 @@ export default function TradeScreen({ ticker, side }: { ticker: string; side: 'b
                     label: 'You sell',
                     value: `${formatShares(sharesOf(BigInt(quote.spendRaw)))} ${data.ticker}`,
                   },
-                  { label: 'You get about', value: formatUsd(cashOf(quote.receiveRaw) - fees) },
-                  { label: 'At least', value: formatUsd(cashOf(quote.minReceiveRaw) - fees) },
+                  {
+                    label: 'You get about',
+                    value: formatUsd(cashOf(quote.receiveRaw) - fees),
+                  },
+                  {
+                    label: 'At least',
+                    value: formatUsd(cashOf(quote.minReceiveRaw) - fees),
+                  },
                   { label: 'Fees', value: formatUsd(fees) },
                   marketFeeRow,
                 ]
@@ -204,8 +213,9 @@ export default function TradeScreen({ ticker, side }: { ticker: string; side: 'b
         <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
           The price can move a little before this goes through; you’ll never get less than the
           amount shown as “at least”. Fees cover what the trade costs us to send, at cost with a
-          small buffer{Number(quote.tradeFeeRaw) > 0 ? ', plus a small trading fee' : ''}. The
-          market fee goes to the people who provide this market, not to us.
+          small buffer
+          {Number(quote.tradeFeeRaw) > 0 ? ', plus a small trading fee' : ''}. The market fee goes
+          to the people who provide this market, not to us.
           {data.priceSource === 'market'
             ? ' This stock is priced by its market here, which can differ from where it trades elsewhere.'
             : ''}

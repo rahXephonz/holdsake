@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { EarnArt } from '@/components/home-art'
 import { CheckIcon, InfoIcon } from '@phosphor-icons/react'
 import { type ReactNode, useState } from 'react'
 import { AmountDisplay, Keypad } from '@/components/keypad'
@@ -513,15 +514,16 @@ function ReviewStep({
 }
 
 export function EarnHomeCard({ data }: { data: EarnView | undefined }) {
-  if (!data) return <Skeleton className="mt-6 h-20 rounded-3xl" />
+  if (!data) return <Skeleton className="mt-6 h-22 rounded-3xl" />
   const value = rawToNumber(data.valueRaw, data.decimals)
   const interest = rawToNumber(data.interestRaw, data.decimals)
   return (
     <Link
       to="/earn"
-      className="mt-6 flex items-center justify-between gap-4 rounded-3xl bg-secondary p-5"
+      className="mt-6 flex items-center justify-between gap-4 rounded-3xl bg-secondary p-4 pr-5"
     >
-      <div className="min-w-0">
+      <EarnArt />
+      <div className="min-w-0 flex-1">
         <p className="font-medium">Earn</p>
         <p className="text-sm text-muted-foreground">
           {value > 0

@@ -22,13 +22,13 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
     ],
     links: [
-      // Google Sans and Space Grotesk (numbers) from Google Fonts. Valley Sans isn't there, so
+      // Google Sans and Inter (numbers) from Google Fonts. Valley Sans isn't there, so
       // headings fall back to Google Sans until its licensed files land in packages/ui/src/fonts.
       { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
       { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
       {
         rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap',
+        href: 'https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap',
       },
       { rel: 'stylesheet', href: appCss },
       { rel: 'manifest', href: '/manifest.webmanifest' },

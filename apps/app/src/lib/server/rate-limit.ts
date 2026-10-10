@@ -11,6 +11,7 @@ export const RATE_LIMITS = {
   build: { limit: 20, windowMs: 60_000 },
   submit: { limit: 20, windowMs: 60_000 },
   submitIp: { limit: 40, windowMs: 60_000 },
+  avatar: { limit: 10, windowMs: 60 * 60_000 },
 } as const
 
 type Window = { count: number; resetAt: number }

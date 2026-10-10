@@ -21,6 +21,8 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as SendRouteImport } from './routes/send'
 import { Route as SendStocksRouteImport } from './routes/send-stocks'
+import { Route as WatchlistRouteImport } from './routes/watchlist'
+import { Route as ApiAvatarRouteImport } from './routes/api/avatar'
 import { Route as ApiMeRouteImport } from './routes/api/me'
 import { Route as ApiNotificationsRouteImport } from './routes/api/notifications'
 import { Route as ApiPortfolioRouteImport } from './routes/api/portfolio'
@@ -119,6 +121,16 @@ const SendRoute = SendRouteImport.update({
 const SendStocksRoute = SendStocksRouteImport.update({
   id: '/send-stocks',
   path: '/send-stocks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchlistRoute = WatchlistRouteImport.update({
+  id: '/watchlist',
+  path: '/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAvatarRoute = ApiAvatarRouteImport.update({
+  id: '/api/avatar',
+  path: '/api/avatar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMeRoute = ApiMeRouteImport.update({
@@ -331,6 +343,8 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/send': typeof SendRoute
   '/send-stocks': typeof SendStocksRoute
+  '/watchlist': typeof WatchlistRoute
+  '/api/avatar': typeof ApiAvatarRoute
   '/api/me': typeof ApiMeRoute
   '/api/notifications': typeof ApiNotificationsRoute
   '/api/portfolio': typeof ApiPortfolioRoute
@@ -384,6 +398,8 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/send': typeof SendRoute
   '/send-stocks': typeof SendStocksRoute
+  '/watchlist': typeof WatchlistRoute
+  '/api/avatar': typeof ApiAvatarRoute
   '/api/me': typeof ApiMeRoute
   '/api/notifications': typeof ApiNotificationsRoute
   '/api/portfolio': typeof ApiPortfolioRoute
@@ -438,6 +454,8 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/send': typeof SendRoute
   '/send-stocks': typeof SendStocksRoute
+  '/watchlist': typeof WatchlistRoute
+  '/api/avatar': typeof ApiAvatarRoute
   '/api/me': typeof ApiMeRoute
   '/api/notifications': typeof ApiNotificationsRoute
   '/api/portfolio': typeof ApiPortfolioRoute
@@ -493,6 +511,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/send'
     | '/send-stocks'
+    | '/watchlist'
+    | '/api/avatar'
     | '/api/me'
     | '/api/notifications'
     | '/api/portfolio'
@@ -546,6 +566,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/send'
     | '/send-stocks'
+    | '/watchlist'
+    | '/api/avatar'
     | '/api/me'
     | '/api/notifications'
     | '/api/portfolio'
@@ -599,6 +621,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/send'
     | '/send-stocks'
+    | '/watchlist'
+    | '/api/avatar'
     | '/api/me'
     | '/api/notifications'
     | '/api/portfolio'
@@ -653,6 +677,8 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SendRoute: typeof SendRoute
   SendStocksRoute: typeof SendStocksRoute
+  WatchlistRoute: typeof WatchlistRoute
+  ApiAvatarRoute: typeof ApiAvatarRoute
   ApiMeRoute: typeof ApiMeRoute
   ApiNotificationsRoute: typeof ApiNotificationsRoute
   ApiPortfolioRoute: typeof ApiPortfolioRoute
@@ -778,6 +804,20 @@ declare module '@tanstack/react-router' {
       path: '/send-stocks'
       fullPath: '/send-stocks'
       preLoaderRoute: typeof SendStocksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watchlist': {
+      id: '/watchlist'
+      path: '/watchlist'
+      fullPath: '/watchlist'
+      preLoaderRoute: typeof WatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/avatar': {
+      id: '/api/avatar'
+      path: '/api/avatar'
+      fullPath: '/api/avatar'
+      preLoaderRoute: typeof ApiAvatarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/me': {
@@ -1069,6 +1109,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SendRoute: SendRoute,
   SendStocksRoute: SendStocksRoute,
+  WatchlistRoute: WatchlistRoute,
+  ApiAvatarRoute: ApiAvatarRoute,
   ApiMeRoute: ApiMeRoute,
   ApiNotificationsRoute: ApiNotificationsRoute,
   ApiPortfolioRoute: ApiPortfolioRoute,
