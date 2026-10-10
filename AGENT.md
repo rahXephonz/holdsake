@@ -2,8 +2,7 @@
 
 Holdsake lets people give real ownership: tokenized stocks and cash, sent as personal gifts,
 pooled into goal funds, and borrowed against without selling. This file is what you need to change
-the code safely. It follows the shape of Morrow (`playriglabs/trymorrow`, the same product on
-Solana): read its `AGENT.md` when a flow here says "like Morrow". https://holdsake.app
+the code safely. https://holdsake.app
 
 ## Product in one paragraph
 
@@ -42,7 +41,7 @@ should quietly cost us money.
 | Layer           | Choice                                                                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------- |
 | Monorepo        | **moon v2** (tasks, project graph, `moon ci`) + **proto** (pinned tool versions)                        |
-| Package manager | pnpm workspaces (`pnpm-workspace.yaml`, `engineStrict`), same as Morrow                                 |
+| Package manager | pnpm workspaces (`pnpm-workspace.yaml`, `engineStrict`)                                                 |
 | Runtime         | Node 24                                                                                                 |
 | App             | TanStack Start (React 19, SSR, file routes, server routes), PWA                                         |
 | Landing         | Not decided. `apps/landing/` is an empty placeholder (see below)                                        |
@@ -154,7 +153,7 @@ The config files are the source of truth; this is what they do.
 
 ### Git hooks and CI
 
-- `lefthook.yml`, like Morrow: pre-commit runs `oxfmt` and `oxlint --fix` on staged files and
+- `lefthook.yml`: pre-commit runs `oxfmt` and `oxlint --fix` on staged files and
   re-stages fixes; pre-push runs `moon run :typecheck`. Installed by the root `prepare` script.
 - CI (`.github/workflows/ci.yml`): checkout with full history, `moonrepo/setup-toolchain`
   (reads `.prototools`), `foundry-toolchain` at 1.7.1, `pnpm install --frozen-lockfile`, then
@@ -180,14 +179,17 @@ not their brands: no logos, brand colours, `$cashtag` styling or copy from eithe
 - Confirmation screens are a short receipt of labelled rows, then one button.
 - When in doubt, remove: fewer elements, fewer colours, fewer words. White space over dividers.
 
-**Logo and favicon: skipped for now**
+**Logo and app icons (decided 2026-10-10)**
 
-- Don't design, generate or add a Holdsake logo, wordmark, favicon, apple-touch-icon or PWA
-  manifest icons. Where the brand would sit, use the name "Holdsake" set in Valley Sans as plain
-  text. Don't add placeholder icon files either.
-- Stock logos (`stock-logo` component) are not affected; they stay.
-- Without manifest icons, Chrome won't offer the install prompt. That's accepted until the logo
-  exists; don't work around it.
+- The logo is `apps/app/public/icons/logo.svg` (chosen by the user 2026-10-10): a flat white gift
+  box with a two-petal bow on a cobalt `#2B4BF2` rounded tile. `apps/app/scripts/icons.ts` makes
+  the four PNGs from it; its `tile` constant must match the logo's colour. Don't redesign it or
+  generate another unless the user asks.
+- Where the brand sits in text, use "Holdsake" in Valley Sans.
+- Stock logos (`stock-logo` component) are not affected.
+- PWA: `public/sw.js` (offline page at `/offline`, cached `/assets/`, push
+  handlers), registered in production only from an inline script in `__root.tsx` that also
+  catches `beforeinstallprompt`; `components/install-prompt.tsx` is the banner.
 
 **Light mode only**
 
@@ -344,7 +346,7 @@ calldata byte (`ArbGasInfo.getPricesInWei`), ETH $2,706 (Chainlink).
 - **Chainlink prices already include the multiplier.** Don't apply it again to a Chainlink price.
   Anything that works in raw amounts (fair-price checks, fund values, share-paid fees, collateral)
   needs price per raw unit, so convert explicitly and name variables so it's obvious which one you
-  have (`pricePerShare` vs `pricePerRaw`, like Morrow's `usdPrice` vs `tokenPriceUsd`). Confirm
+  have (`pricePerShare` vs `pricePerRaw`). Confirm
   this per feed during "Verify first": read the feed and `uiMultiplier` across a past multiplier
   change, don't take it on trust.
 - **Canonical addresses only.** Plenty of fake tokens reuse the tickers (DexScreener shows
@@ -445,7 +447,7 @@ server builds (`encodeCreateGift`, `encodeClaimGift`, …). No hand-encoded sele
   deployment"), because Alchemy's bundler never mined ops carrying a 7702 authorization here.
 - The delegation target controls the user's whole account. Only ever that one pinned address;
   never a contract we wrote, never an address from user input. The submit route checks it.
-- Every on-chain action has the same three steps, like Morrow: the server builds the batch and
+- Every on-chain action has the same three steps: the server builds the batch and
   records a draft row, the browser signs it with no UI, the server's `submit` verifies and sends.
 - Use `permit` instead of `approve` where the token supports it (TSLA and USDG both do).
 
@@ -556,11 +558,11 @@ doesn't fund the paymaster). 56 local tests (unit, fuzz, invariant, a local Entr
 - `forge test` covers every flow, including a stock whose `uiMultiplier` changes mid-gift. Fuzz every amount and timestamp input, and invariant-test that for every token the
   contract's balance is at least the sum of everything it owes.
 - `packages/sdk` tests run each flow end to end against an anvil fork through the same encoders
-  the server uses, the way Morrow's `pnpm test:gifts` runs against a throwaway validator.
+  the server uses.
 
 ### Borrow on Morpho (no contract of ours)
 
-Borrowing runs on **Morpho Blue** (`MORPHO_BLUE`), like Morrow's runs on Kamino: the shares go in as
+Borrowing runs on **Morpho Blue** (`MORPHO_BLUE`): the shares go in as
 collateral, cash comes out to the person's own account, and Morpho is the book. We only build what
 they sign (`supplyCollateral`, `borrow`, `repay`, `withdrawCollateral`, batched through their
 7702 account) and read positions back from Morpho; we record nothing we can't re-read.
@@ -629,19 +631,19 @@ Also check, before sponsoring:
 
 ## Feature map
 
-| Feature                                | Status                                                                           |
-| -------------------------------------- | -------------------------------------------------------------------------------- |
-| Gifts, claim, 30-day refund            | Build (contract). Depends on "Verify first".                                     |
-| Gifts to email                         | Build. Privy pregenerates EVM wallets for email recipients.                      |
-| Cash gifts                             | Build, USDG as the cash item.                                                    |
-| Funds                                  | Build (contract).                                                                |
-| Buy / sell                             | Build on Uniswap, USDG pairs.                                                    |
-| Send stocks, cash out                  | Build (plain ERC-20 transfer).                                                   |
-| Borrow against shares                  | Built on Morpho (NVDA, AAPL, GOOGL, TSLA); see "Borrow on Morpho".               |
-| Earn (apys.co-style)                   | Built: cash into a Morpho USDG vault, interest claimed as shares (see "Earn").   |
-| Orders at a price                      | Blocked until a limit order protocol is confirmed on this chain.                 |
-| Notifications, watchlists, share cards | Build, same design as Morrow (`notify()`, local watchlists, canvas share cards). |
-| Private gift details                   | Not on this chain yet. Don't claim it in UI or copy.                             |
+| Feature                                | Status                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------ |
+| Gifts, claim, 30-day refund            | Build (contract). Depends on "Verify first".                                   |
+| Gifts to email                         | Build. Privy pregenerates EVM wallets for email recipients.                    |
+| Cash gifts                             | Build, USDG as the cash item.                                                  |
+| Funds                                  | Build (contract).                                                              |
+| Buy / sell                             | Build on Uniswap, USDG pairs.                                                  |
+| Send stocks, cash out                  | Build (plain ERC-20 transfer).                                                 |
+| Borrow against shares                  | Built on Morpho (NVDA, AAPL, GOOGL, TSLA); see "Borrow on Morpho".             |
+| Earn (apys.co-style)                   | Built: cash into a Morpho USDG vault, interest claimed as shares (see "Earn"). |
+| Orders at a price                      | Blocked until a limit order protocol is confirmed on this chain.               |
+| Notifications, watchlists, share cards | Build (`notify()`, local watchlists, canvas share cards).                      |
+| Private gift details                   | Not on this chain yet. Don't claim it in UI or copy.                           |
 
 ## Money rules (don't regress these)
 
@@ -887,4 +889,4 @@ Write the answer here before building what depends on it.
 - Don't claim gift privacy on this chain.
 - Don't change an already-applied migration file; add a new one.
 - Don't commit or push unless asked.
-- Don't add Telegram (login, Mini App, bot, names as recipients), even though Morrow has it.
+- Don't add Telegram (login, Mini App, bot, names as recipients).
