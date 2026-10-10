@@ -2,3 +2,6 @@
 .env.*
 contracts
 scripts
+# The video project and its recordings play no part in the app build
+hackathon
+apps/video
