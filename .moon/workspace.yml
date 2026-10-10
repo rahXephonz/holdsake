@@ -6,6 +6,7 @@ projects:
   contracts: 'contracts'
   sdk: 'packages/sdk'
   ui: 'packages/ui'
+  video: 'apps/video'
 
 vcs:
   client: 'git'

@@ -1,0 +1,9 @@
+$schema: '../../.moon/cache/schemas/project.json'
+
+tags: ['video']
+
+# The launch video, written in Remotion. Rendering is manual (`pnpm --filter @holdsake/video
+# render`): it downloads a headless browser and takes minutes, so it isn't a CI task.
+tasks:
+  typecheck:
+    command: 'tsc --noEmit'
