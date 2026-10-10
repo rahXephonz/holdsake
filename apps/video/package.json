@@ -6,6 +6,8 @@
     "studio": "node --experimental-strip-types scripts/music.ts && remotion studio src/index.ts",
     "music": "node --experimental-strip-types scripts/music.ts",
     "render": "node --experimental-strip-types scripts/music.ts && remotion render src/index.ts Launch out/holdsake-launch.mp4",
+    "clips": "sh scripts/clips.sh",
+    "render:demo": "node --experimental-strip-types scripts/music.ts && remotion render src/index.ts Demo out/holdsake-demo.mp4",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

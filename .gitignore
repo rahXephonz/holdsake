@@ -17,3 +17,11 @@ contracts/out
 contracts/cache
 contracts/broadcast/*/31337
 contracts/dependencies
+
+# Raw phone recordings for the demo video (~100 MB each)
+hackathon/*.MP4
+hackathon/*.mp4
+hackathon/*.mov
+
+# Email previews (apps/app/scripts/emails.ts)
+.email-preview
