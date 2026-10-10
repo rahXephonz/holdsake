@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { ArrowsLeftRightIcon, HeartIcon, PaperPlaneTiltIcon } from '@phosphor-icons/react'
 import { usePrivy } from '@privy-io/react-auth'
 import { useState } from 'react'
 import { Screen, SectionTitle } from '@/components/screen'
@@ -6,6 +7,7 @@ import { StockLogo } from '@/components/stock-logo'
 import { buttonVariants } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePortfolioQuery, useStockProfileQuery, useStockQuery } from '@/lib/client/queries'
+import { useWatchlist } from '@/lib/client/watchlist'
 import { formatShares, formatUsd, relativeTime } from '@/lib/format'
 import type { CompanyProfile } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -31,6 +33,7 @@ export default function StockScreen({ ticker }: { ticker: string }) {
     <Screen
       back="/stocks"
       title=""
+      action={<WatchButton ticker={data.ticker} name={data.name} />}
       footer={
         authenticated &&
         (holding || data.tradable) && (
@@ -83,41 +86,46 @@ export default function StockScreen({ ticker }: { ticker: string }) {
       {authenticated && portfolio.isPending && (
         <>
           <SectionTitle>You own</SectionTitle>
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-[4.25rem] rounded-2xl" />
-            <Skeleton className="h-[4.25rem] rounded-2xl" />
-          </div>
+          <Skeleton className="h-[8.5rem] rounded-3xl" />
         </>
       )}
 
       {holding && (
         <>
           <SectionTitle>You own</SectionTitle>
-          <div className="grid grid-cols-2 gap-3">
-            <Fact label="Shares" value={formatShares(holding.shares)} />
-            <Fact
-              label="Worth"
-              value={holding.usdValue === null ? '—' : formatUsd(holding.usdValue)}
-            />
-          </div>
-          <div className="mt-3 flex gap-4">
-            {data.tradable && (
-              <Link
-                to="/trade/$ticker"
-                params={{ ticker: data.ticker }}
-                search={{ side: 'sell' }}
-                className="text-sm font-medium underline-offset-4 hover:underline"
-              >
-                Sell
-              </Link>
-            )}
-            <Link
-              to="/send-stocks"
-              search={{ stock: data.ticker }}
-              className="text-sm font-medium underline-offset-4 hover:underline"
-            >
-              Send out
-            </Link>
+          <div className="rounded-3xl bg-secondary p-4">
+            <div className="grid grid-cols-2 gap-3 px-1">
+              <div>
+                <p className="text-sm text-muted-foreground">Shares</p>
+                <p className="mt-0.5 font-number text-xl font-medium tabular-nums">
+                  {formatShares(holding.shares)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Worth</p>
+                <p className="mt-0.5 font-number text-xl font-medium tabular-nums">
+                  {holding.usdValue === null ? '—' : formatUsd(holding.usdValue)}
+                </p>
+              </div>
+            </div>
+            {/* Secondary moves on what you hold; the screen's one primary action stays Buy */}
+            <div className={cn('mt-4 grid gap-2', data.tradable ? 'grid-cols-2' : 'grid-cols-1')}>
+              {data.tradable && (
+                <HoldingAction
+                  to="/trade/$ticker"
+                  params={{ ticker: data.ticker }}
+                  search={{ side: 'sell' }}
+                  Icon={ArrowsLeftRightIcon}
+                  label="Sell"
+                />
+              )}
+              <HoldingAction
+                to="/send-stocks"
+                search={{ stock: data.ticker }}
+                Icon={PaperPlaneTiltIcon}
+                label="Send out"
+              />
+            </div>
           </div>
         </>
       )}
@@ -142,6 +150,23 @@ export default function StockScreen({ ticker }: { ticker: string }) {
         reflected in the number of shares you see. You can gift, sell or send them any time.
       </p>
     </Screen>
+  )
+}
+
+function WatchButton({ ticker, name }: { ticker: string; name: string }) {
+  const { tickers, toggle } = useWatchlist()
+  const watching = tickers.includes(ticker)
+  return (
+    <button
+      type="button"
+      onClick={() => toggle(ticker)}
+      aria-pressed={watching}
+      aria-label={watching ? `Remove ${name} from your watchlist` : `Add ${name} to your watchlist`}
+      className="flex size-10 items-center justify-center rounded-full hover:bg-muted"
+    >
+      {/* Filled, not red: colour is kept for gain/loss and the one action */}
+      <HeartIcon weight={watching ? 'fill' : 'regular'} className="size-6" />
+    </button>
   )
 }
 
@@ -210,11 +235,28 @@ function StockSkeleton() {
   )
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function HoldingAction({
+  to,
+  params,
+  search,
+  Icon,
+  label,
+}: {
+  to: string
+  params?: Record<string, string>
+  search?: Record<string, string>
+  Icon: typeof HeartIcon
+  label: string
+}) {
   return (
-    <div className="rounded-2xl bg-secondary px-4 py-3">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-0.5 font-number text-lg font-medium tabular-nums">{value}</p>
-    </div>
+    <Link
+      to={to}
+      params={params}
+      search={search}
+      className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-background text-sm font-medium hover:bg-muted"
+    >
+      <Icon className="size-4" />
+      {label}
+    </Link>
   )
 }

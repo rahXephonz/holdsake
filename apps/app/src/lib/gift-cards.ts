@@ -1,10 +1,11 @@
 // Greeting cards a gift is wrapped in. Art direction: flat paper-cut print, three inks per card,
 // no gradients, no emoji or stock icons; each occasion drawn from its own motif (a woven ketupat,
-// paper lanterns, a red envelope's seal). Plain SVG strings, so the same art renders in the app
+// paper lanterns, a red envelope's seal, fireworks over two clinking glasses). Plain SVG strings, so the same art renders in the app
 // and in the server-made preview image that chats unfurl.
 
 export const CARD_THEMES = [
   'birthday',
+  'new_year',
   'angpao',
   'lunar_new_year',
   'lebaran',
@@ -30,6 +31,13 @@ type Card = {
 
 const svg = (body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">${body}</svg>`
+
+/** A paper-cut firework: rays of alternating length around a small core */
+const burst = (cx: number, cy: number, r: number, fill: string) =>
+  Array.from({ length: 12 }, (_, i) => {
+    const length = i % 2 ? r * 0.62 : r
+    return `<rect x="${cx - 3}" y="${cy - length}" width="6" height="${length * 0.55}" rx="3" fill="${fill}" transform="rotate(${i * 30} ${cx} ${cy})"/>`
+  }).join('') + `<circle cx="${cx}" cy="${cy}" r="${r * 0.12}" fill="${fill}"/>`
 
 /** A scatter of small shapes, placed by hand so it reads as printed, not generated */
 const dots = (points: [number, number, number][], fill: string) =>
@@ -64,6 +72,42 @@ export const CARDS: Record<CardTheme, Card> = {
       <path d="M155 60 q10 14 0 24 q-10 -10 0 -24z" fill="#F26B3A"/>
       <path d="M200 52 q10 14 0 24 q-10 -10 0 -24z" fill="#F26B3A"/>
       <path d="M245 60 q10 14 0 24 q-10 -10 0 -24z" fill="#F26B3A"/>
+    `),
+  },
+  new_year: {
+    label: 'New Year',
+    paper: '#ECEEF8',
+    ink: '#1B1F4A',
+    art: svg(`
+      ${burst(92, 78, 52, '#D9487A')}
+      ${burst(318, 64, 40, '#E8B33A')}
+      ${burst(340, 176, 24, '#D9487A')}
+      ${dots(
+        [
+          [40, 170, 4],
+          [168, 30, 3],
+          [236, 116, 4],
+          [58, 252, 5],
+          [372, 252, 4],
+        ],
+        '#E8B33A',
+      )}
+      ${[
+        [154, 112, 14],
+        [246, 112, -14],
+      ]
+        .map(
+          ([x, y, angle]) => `
+        <g transform="translate(${x} ${y}) rotate(${angle} 0 150)">
+          <path d="M-20 0 h40 l-12 84 h-16z" fill="#ECEEF8" stroke="#1B1F4A" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M-16 24 h32 l-8 58 h-16z" fill="#E8B33A"/>
+          <circle cx="-3" cy="44" r="3" fill="#ECEEF8"/>
+          <circle cx="4" cy="60" r="2.5" fill="#ECEEF8"/>
+          <rect x="-3" y="84" width="6" height="52" fill="#1B1F4A"/>
+          <rect x="-24" y="134" width="48" height="8" rx="4" fill="#1B1F4A"/>
+        </g>`,
+        )
+        .join('')}
     `),
   },
   angpao: {

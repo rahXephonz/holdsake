@@ -23,7 +23,7 @@ import { microUsdToRaw, rawToMicroUsd } from '@/lib/server/prices'
 import { db } from '@/lib/server/supabase'
 import { balancesOf } from '@/lib/server/tokens'
 import { treasury } from '@/lib/server/treasury'
-import { buyCalls } from '@/lib/server/trades'
+import { buyCalls, sellCalls } from '@/lib/server/trades'
 import type { UserRow } from '@/lib/server/users'
 import type { FundView } from '@/lib/types'
 
@@ -323,17 +323,21 @@ export async function buildContribute(input: {
  * swaps are guaranteed to deliver (their minimum out) goes into the fund, all in one signature.
  * A swap that does better than its minimum leaves the small extra in the person's account. The
  * fee comes from cash left over, or out of the amount when that's short.
+ *
+ * With `sell`, the cash comes from selling shares the person holds outside the mix first, in the
+ * same batch: what the sale is guaranteed to bring (its minimum out) is what buys the mix. Two
+ * trades means two pool fees; the screen says so before anyone confirms.
  */
 export async function buildCashContribute(input: {
   fund: FundRow
   user: UserRow
   wallet: Address
-  cashRaw: bigint
+  cashRaw?: bigint
+  sell?: { token: string; amountRaw: bigint }
   note: string | null
 }) {
-  const { fund, user, wallet, cashRaw } = input
+  const { fund, user, wallet } = input
   if (!fund.onchain_id) throw badRequest('This fund is still being set up.')
-  if (cashRaw <= 0n) throw badRequest('Enter an amount.')
   const contract = getAddress(fund.contract)
   const id = BigInt(fund.onchain_id)
   const mix: { stock: CatalogEntry; percent: number }[] = []
@@ -344,8 +348,28 @@ export async function buildCashContribute(input: {
     mix.push({ stock, percent })
   }
   if (mix.length === 0) throw badRequest('This fund has nothing to buy.')
-  const [cash = 0n] = await balancesOf(wallet, [CASH_ADDRESS])
-  if (cashRaw > cash) throw badRequest('You don’t have that much cash.', 'insufficient_balance')
+  const [cashBalance = 0n] = await balancesOf(wallet, [CASH_ADDRESS])
+
+  let sold: { stock: CatalogEntry; amountRaw: bigint; cashRaw: bigint; calls: Call[] } | null = null
+  if (input.sell) {
+    const stock = await findStock(input.sell.token)
+    if (!stock) throw badRequest('We don’t offer that stock.', 'unknown_token')
+    if (stock.address.toLowerCase() in fund.allocations)
+      throw badRequest(`${stock.ticker} is in this fund: add it straight in instead.`)
+    if (!stock.tradable) throw badRequest(`${stock.ticker} can’t be sold here yet.`)
+    const [held = 0n] = await balancesOf(wallet, [stock.address])
+    if (input.sell.amountRaw <= 0n || input.sell.amountRaw > held)
+      throw badRequest(`You don’t have that many ${stock.ticker} shares.`, 'insufficient_balance')
+    // Quoted once: the sale doesn't change with the fee, only how much of it buys the mix
+    const swap = await sellCalls(stock, input.sell.amountRaw)
+    sold = { stock, amountRaw: input.sell.amountRaw, cashRaw: swap.minOut, calls: swap.calls }
+  }
+  const cashRaw = sold ? sold.cashRaw : (input.cashRaw ?? 0n)
+  if (cashRaw <= 0n) throw badRequest('Enter an amount.')
+  if (!sold && cashRaw > cashBalance)
+    throw badRequest('You don’t have that much cash.', 'insufficient_balance')
+  // Cash in the account once the sale (if any) lands
+  const cash = cashBalance + (sold ? sold.cashRaw : 0n)
 
   const groupId = crypto.randomUUID()
   let bought: { stock: CatalogEntry; sharesRaw: bigint; cashRaw: bigint }[] = []
@@ -361,7 +385,7 @@ export async function buildCashContribute(input: {
       const cashLeft = cash - cashRaw
       spentRaw = cashLeft >= feeRaw ? cashRaw : cashRaw - (feeRaw - cashLeft)
       if (spentRaw <= 0n) throw badRequest('That’s less than the fee. Try a bigger amount.')
-      const calls: Call[] = []
+      const calls: Call[] = sold ? [...sold.calls] : []
       bought = []
       let assigned = 0n
       for (const [index, { stock, percent }] of mix.entries()) {
@@ -409,6 +433,13 @@ export async function buildCashContribute(input: {
   return {
     ...built,
     contribution: {
+      sold: sold && {
+        ticker: sold.stock.ticker,
+        shares:
+          (Number(sold.amountRaw) / 10 ** sold.stock.decimals) *
+          (Number(sold.stock.uiMultiplier) / 1e18),
+        cashRaw: sold.cashRaw.toString(),
+      },
       spentRaw: spentRaw.toString(),
       feeRaw: feePaidRaw.toString(),
       buys: bought.map((entry) => ({

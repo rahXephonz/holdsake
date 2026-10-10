@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { BorrowArt } from '@/components/home-art'
 import { useState } from 'react'
 import { AmountDisplay, Keypad } from '@/components/keypad'
 import { ListRow } from '@/components/list-row'
@@ -121,7 +122,12 @@ export default function BorrowScreen() {
         onConfirm={() =>
           prepare.data &&
           confirm.mutate(prepare.data, {
-            onSuccess: () => setStep({ name: 'done', action: step.action, ticker: step.ticker }),
+            onSuccess: () =>
+              setStep({
+                name: 'done',
+                action: step.action,
+                ticker: step.ticker,
+              }),
           })
         }
       />
@@ -322,7 +328,12 @@ export default function BorrowScreen() {
             onClick={() => go({ name: 'amount', ticker: market.ticker })}
             leading={<StockLogo ticker={market.ticker} logoUrl={market.logoUrl} />}
             title={market.name}
-            subtitle={`Up to ${formatUsd(market.canBorrowUsd)} · ${rate(market.apy)}`}
+            subtitle={
+              <span className="font-sans text-sm">
+                Up to ${formatUsd(market.canBorrowUsd)}{' '}
+                <span className="font-number">· ${rate(market.apy)}</span>
+              </span>
+            }
           />
         ))
       )}
@@ -480,7 +491,10 @@ function ReviewStep({
                             ]
                           : []),
                         { label: 'Rate', value: `${rate(loan.apy)}, changes` },
-                        { label: 'If it’s sold', value: `${loan.penaltyPct.toFixed(1)}% penalty` },
+                        {
+                          label: 'If it’s sold',
+                          value: `${loan.penaltyPct.toFixed(1)}% penalty`,
+                        },
                         ...(fee === null ? [] : [{ label: 'Fee', value: formatUsd(fee) }]),
                       ]
                     : [
@@ -529,9 +543,10 @@ export function BorrowHomeCard({ data }: { data: BorrowView | undefined }) {
   return (
     <Link
       to="/borrow"
-      className="mt-3 flex items-center justify-between gap-4 rounded-3xl bg-secondary p-5"
+      className="mt-3 flex items-center justify-between gap-4 rounded-3xl bg-secondary p-4 pr-5"
     >
-      <div className="min-w-0">
+      <BorrowArt />
+      <div className="min-w-0 flex-1">
         <p className="font-medium">Borrow</p>
         <p
           className={cn(
@@ -547,7 +562,15 @@ export function BorrowHomeCard({ data }: { data: BorrowView | undefined }) {
         </p>
       </div>
       <span className="shrink-0 font-number text-lg font-semibold tabular-nums">
-        {owed > 0 ? formatUsd(owed) : can > 0 ? `Up to ${formatUsd(can)}` : ''}
+        {owed > 0 ? (
+          formatUsd(owed)
+        ) : can > 0 ? (
+          <span className="font-sans text-sm">
+            Up to <span className="font-number">{formatUsd(can)}</span>{' '}
+          </span>
+        ) : (
+          ''
+        )}
       </span>
     </Link>
   )

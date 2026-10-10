@@ -2,7 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { CaretRightIcon } from '@phosphor-icons/react'
 import type { ReactNode } from 'react'
 import { Loading, Screen, ScreenTitle, SectionTitle } from '@/components/screen'
-import { Avatar } from '@/components/stock-logo'
+import { AvatarPicker } from '@/components/avatar-picker'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/lib/client/session'
 
@@ -20,9 +20,9 @@ export default function ProfileScreen() {
   return (
     <Screen tab="/profile">
       <ScreenTitle>Profile</ScreenTitle>
-      <div className="mt-4 flex items-center gap-4">
-        <Avatar name={profile.name ?? ''} url={profile.avatarUrl} size={64} />
-        <div className="min-w-0">
+      <div className="mt-4 flex items-start gap-4">
+        <AvatarPicker name={profile.name ?? ''} url={profile.avatarUrl} removable />
+        <div className="min-w-0 pt-2.5">
           <p className="truncate text-xl font-medium">{profile.name}</p>
           <p className="truncate text-muted-foreground">@{profile.handle}</p>
         </div>

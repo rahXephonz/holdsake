@@ -99,7 +99,7 @@ export type GiftView = {
   canRefund: boolean
 }
 
-/** A gift as seen through its link before signing in: no amounts, no message */
+/** A gift as seen through its link before signing in: what's inside, never the note */
 export type GiftPreview = {
   senderName: string
   senderAvatarUrl: string | null
@@ -107,6 +107,8 @@ export type GiftPreview = {
   /** Still there to be opened */
   waiting: boolean
   cardTheme: CardTheme
+  /** What's inside, never the note */
+  items: Pick<GiftItemView, 'kind' | 'ticker' | 'name' | 'shares' | 'usdValue'>[]
 }
 
 /** What the browser signs for any on-chain action (see lib/server/operations.ts) */

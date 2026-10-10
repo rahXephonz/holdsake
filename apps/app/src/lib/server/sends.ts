@@ -4,9 +4,11 @@ import { CASH_ADDRESS, cashDecimals, chargeableFeed, findGiftAsset } from '@/lib
 import { chain } from '@/lib/server/chain'
 import { badRequest } from '@/lib/server/http'
 import { buildOperation, type Call } from '@/lib/server/operations'
+import { cashRawPerToken } from '@/lib/server/pools'
 import { microUsdToRaw } from '@/lib/server/prices'
 import { db } from '@/lib/server/supabase'
 import { balancesOf } from '@/lib/server/tokens'
+import { sellCalls } from '@/lib/server/trades'
 import { treasury } from '@/lib/server/treasury'
 import { userByHandle } from '@/lib/server/recipients'
 import type { UserRow } from '@/lib/server/users'
@@ -51,7 +53,8 @@ export async function validateDestination(value: string, sender: Address): Promi
 
 /**
  * A plain transfer out of the person's own account, plus the fee: from cash when there's enough
- * left after the send, otherwise from the same stock at its Chainlink price
+ * left after the send, otherwise from the same shares (at their Chainlink price, or by selling a
+ * sliver where there's none), so sending shares works with no cash at all
  */
 export async function buildSend(input: {
   user: UserRow
@@ -78,7 +81,7 @@ export async function buildSend(input: {
     sender,
     kind: 'send',
     context: { sendId },
-    callsWithFee: (feeRaw) => {
+    callsWithFee: async (feeRaw) => {
       sentRaw = amountRaw
       feePaidRaw = feeRaw
       const transfer: Call = { to: token, data: encodeTransfer(destination, amountRaw) }
@@ -97,15 +100,46 @@ export async function buildSend(input: {
           ]
         }
       }
-      const feed = asset.kind === 'stock' ? chargeableFeed(asset.stock) : null
-      if (asset.kind === 'stock' && feed) {
+      if (asset.kind !== 'stock')
+        throw badRequest('Not enough cash to cover the fee.', 'fee_shortfall')
+      const { stock } = asset
+      // Sending shares never needs cash: the fee comes out of the same shares. When the rest of
+      // the balance can't cover it (say, sending all of them), it comes out of what's sent.
+      const sendable = (feeStock: bigint) => {
+        const most = tokenBalance - feeStock
+        return most <= 0n ? 0n : amountRaw < most ? amountRaw : most
+      }
+      const feed = chargeableFeed(stock)
+      if (feed) {
         const feeStock = microUsdToRaw(
           (feeRaw * 10n ** 6n) / 10n ** BigInt(decimals),
-          asset.stock.decimals,
+          stock.decimals,
           feed,
         )
-        if (amountRaw + feeStock <= tokenBalance)
-          return [transfer, { to: token, data: encodeTransfer(treasury(), feeStock) }]
+        sentRaw = sendable(feeStock)
+        if (sentRaw > 0n)
+          return [
+            { to: token, data: encodeTransfer(destination, sentRaw) },
+            { to: token, data: encodeTransfer(treasury(), feeStock) },
+          ]
+      }
+      // No Chainlink price to charge shares at: sell a sliver for cash in the same batch and pay
+      // the fee from that, like opening a gift. The swap is price-checked with a minimum out, so
+      // a pushed pool price can't shortchange the fee; any cash left over stays theirs.
+      const pool = stock.pools[0]
+      const perToken = pool ? cashRawPerToken(pool, stock.decimals) : 0n
+      if (perToken > 0n) {
+        const shortfall = feeRaw - cashLeft
+        // A quarter over the spot amount covers the pool's fee and slippage
+        const sell = (shortfall * 10n ** BigInt(stock.decimals) * 125n) / (perToken * 100n) + 1n
+        sentRaw = sendable(sell)
+        const swap = sentRaw > 0n ? await sellCalls(stock, sell).catch(() => null) : null
+        if (swap && swap.minOut + cashLeft >= feeRaw)
+          return [
+            { to: token, data: encodeTransfer(destination, sentRaw) },
+            ...swap.calls,
+            { to: CASH_ADDRESS, data: encodeTransfer(treasury(), feeRaw) },
+          ]
       }
       throw badRequest('Not enough cash to cover the fee.', 'fee_shortfall')
     },

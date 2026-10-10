@@ -21,6 +21,8 @@ export default function FundScreen({ id }: { id: string }) {
   const portfolio = usePortfolioQuery()
   const action = useFundActionMutation(id)
   const [adding, setAdding] = useState<string | null>(null)
+  // Shares held outside the mix, sold so the cash buys the mix
+  const [selling, setSelling] = useState<string | null>(null)
   const [dollars, setDollars] = useState('0')
   const [copied, setCopied] = useState(false)
   // 'cash': typing how much cash to add; 'added': the success screen after it
@@ -59,6 +61,14 @@ export default function FundScreen({ id }: { id: string }) {
             added && (
               <Receipt
                 rows={[
+                  ...(added.sold
+                    ? [
+                        {
+                          label: `Sold ${added.sold.ticker}`,
+                          value: `${formatShares(added.sold.shares)} shares · ${formatUsd(cashOf(added.sold.cashRaw))}`,
+                        },
+                      ]
+                    : []),
                   ...added.buys.map((buy) => ({
                     label: buy.ticker,
                     value: `${formatShares(buy.shares)} shares · ${formatUsd(cashOf(buy.cashRaw))}`,
@@ -69,9 +79,11 @@ export default function FundScreen({ id }: { id: string }) {
             )
           }
         >
-          {added
-            ? `${formatUsd(cashOf(added.spentRaw))} bought the mix and went into ${data.name}.`
-            : `Your cash went into ${data.name}.`}
+          {added?.sold
+            ? `Your ${added.sold.ticker} became ${formatUsd(cashOf(added.spentRaw))} of the mix and went into ${data.name}.`
+            : added
+              ? `${formatUsd(cashOf(added.spentRaw))} bought the mix and went into ${data.name}.`
+              : `Your cash went into ${data.name}.`}
         </SuccessState>
       </Screen>
     )
@@ -122,6 +134,92 @@ export default function FundScreen({ id }: { id: string }) {
           />
           <p className="mt-3 text-center text-sm text-muted-foreground">
             Buys {data.mix.map((entry) => `${entry.ticker} ${entry.percent}%`).join(', ')}
+          </p>
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setDollars((Math.floor(available * 100) / 100).toFixed(2))}
+              className="h-8 rounded-full bg-secondary px-3 text-sm font-medium"
+            >
+              Max
+            </button>
+          </div>
+        </div>
+        <Keypad value={dollars} onChange={setDollars} />
+      </Screen>
+    )
+  }
+
+  // Shares from outside the mix: sold, and the cash buys the mix, in one go
+  if (selling) {
+    const holding = portfolio.data?.holdings.find(
+      (item) => item.stock.address.toLowerCase() === selling.toLowerCase(),
+    )
+    if (!holding || holding.stock.pricePerToken === null) return <Loading />
+    const { stock } = holding
+    const available = holding.usdValue ?? 0
+    // "Max" rounds down to the cent, which would leave dust behind: it means the whole holding
+    const typedRaw = stockRawFor(dollars, stock.pricePerToken!, stock.decimals)
+    const amountRaw =
+      typedRaw > 0n && Math.abs(Number(dollars) - Math.floor(available * 100) / 100) < 0.005
+        ? BigInt(holding.amountRaw)
+        : typedRaw
+    const over = amountRaw > BigInt(holding.amountRaw)
+    const sharesSold =
+      BigInt(holding.amountRaw) > 0n
+        ? (Number(amountRaw) / Number(holding.amountRaw)) * holding.shares
+        : 0
+    return (
+      <Screen
+        back={`/fund/${id}`}
+        title={`Add from ${stock.ticker}`}
+        footer={
+          <>
+            {action.error && (
+              <p className="mb-3 text-center text-sm text-destructive">
+                {errorMessage(action.error)}
+              </p>
+            )}
+            <Button
+              size="xl"
+              disabled={amountRaw === 0n || over || action.isPending}
+              onClick={() =>
+                action.mutate(
+                  {
+                    action: 'contribute-sell',
+                    sell: { token: stock.address, amountRaw: amountRaw.toString() },
+                    note: null,
+                  },
+                  {
+                    onSuccess: () => {
+                      setSelling(null)
+                      setCashStep('added')
+                    },
+                  },
+                )
+              }
+            >
+              {action.isPending ? 'Adding…' : `Add ${formatUsd(Number(dollars))}`}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-1 flex-col justify-center">
+          <AmountDisplay
+            value={dollars}
+            hint={
+              over ? (
+                <span className="text-destructive">You have {formatUsd(available)}</span>
+              ) : amountRaw > 0n ? (
+                `Sells ${formatShares(sharesSold)} shares of ${stock.ticker}`
+              ) : (
+                `${formatUsd(available)} of ${stock.ticker} available`
+              )
+            }
+          />
+          <p className="mt-3 px-4 text-center text-sm text-balance text-muted-foreground">
+            Buys {data.mix.map((entry) => `${entry.ticker} ${entry.percent}%`).join(', ')}. Selling
+            and buying each have a market fee, so a little less than this lands in the fund.
           </p>
           <div className="mt-3 flex justify-center">
             <button
@@ -209,6 +307,14 @@ export default function FundScreen({ id }: { id: string }) {
       (item) => item.stock.address.toLowerCase() === entry.token.toLowerCase(),
     ),
   )
+  const mixTokens = new Set(data.mix.map((entry) => entry.token.toLowerCase()))
+  const otherHoldings =
+    portfolio.data?.holdings.filter(
+      (item) =>
+        !mixTokens.has(item.stock.address.toLowerCase()) &&
+        item.stock.tradable &&
+        item.stock.pricePerToken !== null,
+    ) ?? []
   const share = async () => {
     await navigator.clipboard.writeText(`${location.origin}/fund/${id}`)
     setCopied(true)
@@ -291,7 +397,7 @@ export default function FundScreen({ id }: { id: string }) {
       {authenticated && (
         <>
           <SectionTitle>Add to it</SectionTitle>
-          {heldMix.length === 0 ? (
+          {heldMix.length === 0 && otherHoldings.length === 0 ? (
             <p className="pb-8 text-sm text-muted-foreground">
               Add cash and it buys the mix for you. Shares of{' '}
               {data.mix.map((entry) => entry.ticker).join(', ')} you already hold can go in too.
@@ -301,10 +407,28 @@ export default function FundScreen({ id }: { id: string }) {
               {heldMix.map((entry) => (
                 <ListRow
                   key={entry.token}
-                  onClick={() => setAdding(entry.token)}
+                  onClick={() => {
+                    setDollars('0')
+                    action.reset()
+                    setAdding(entry.token)
+                  }}
                   leading={<StockLogo ticker={entry.ticker} />}
                   title={`Add ${entry.name}`}
-                  subtitle="From the shares you hold"
+                  subtitle="Straight from the shares you hold"
+                />
+              ))}
+              {otherHoldings.map((item) => (
+                <ListRow
+                  key={item.stock.address}
+                  onClick={() => {
+                    setDollars('0')
+                    action.reset()
+                    setSelling(item.stock.address)
+                  }}
+                  leading={<StockLogo ticker={item.stock.ticker} logoUrl={item.stock.logoUrl} />}
+                  title={`Add from ${item.stock.name}`}
+                  subtitle="Sold and turned into the mix"
+                  value={item.usdValue === null ? undefined : formatUsd(item.usdValue)}
                 />
               ))}
             </div>

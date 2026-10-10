@@ -1,6 +1,7 @@
 import { usePrivy } from '@privy-io/react-auth'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApi, UserFacingError } from '@/lib/client/api'
+import { avatarFrom } from '@/lib/client/avatar'
 import type { CardTheme } from '@/lib/gift-cards'
 import { getGiftPreview } from '@/lib/gift-preview'
 import { useSignAndSubmit } from '@/lib/client/sign'
@@ -163,6 +164,21 @@ export function useUpdateProfileMutation() {
   })
 }
 
+/** Crops and shrinks in the browser, then uploads; `null` removes the photo */
+export function useAvatarMutation() {
+  const api = useApi()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File | null) => {
+      if (!file) return api<Profile>('/api/avatar', { method: 'DELETE' })
+      const form = new FormData()
+      form.append('file', await avatarFrom(file))
+      return api<Profile>('/api/avatar', { method: 'POST', body: form })
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.me }),
+  })
+}
+
 export function useGiftsQuery() {
   const api = useApi()
   const { authenticated } = usePrivy()
@@ -220,7 +236,11 @@ export function useGiftQuoteQuery(items: GiftItemInput[], recipients: number) {
   })
 }
 
-/** Builds one operation per recipient, signs each, submits each; stops at the first failure */
+/**
+ * One gift per recipient, built, signed and sent one after another: each operation needs the
+ * account's next nonce (and, on a first send, the one-time setup), which only exists once the
+ * previous one has landed. Stops at the first failure and says how many went through.
+ */
 export function useSendGiftMutation() {
   const api = useApi()
   const signAndSubmit = useSignAndSubmit()
@@ -232,16 +252,35 @@ export function useSendGiftMutation() {
       message: string | null
       cardTheme: CardTheme
     }) => {
-      const { gifts } = await api<{ gifts: (SignRequest & { giftId: string })[] }>('/api/gifts', {
-        method: 'POST',
-        body: input,
-      })
-      for (const gift of gifts) {
-        const result = await signAndSubmit(gift)
-        if (!result.ok)
-          throw new UserFacingError('This gift didn’t go through. Nothing left your account.')
+      const sent: string[] = []
+      const stopped = (error?: unknown) => {
+        if (sent.length === 0) {
+          if (error instanceof UserFacingError) return error
+          return new UserFacingError('This gift didn’t go through. Nothing left your account.')
+        }
+        return new UserFacingError(
+          `${sent.length} of ${input.recipients.length} gifts went through. The rest didn’t, and nothing more left your account. Check your Gifts tab.`,
+        )
       }
-      return gifts.map((gift) => gift.giftId)
+      for (const recipient of input.recipients) {
+        let gift: SignRequest & { giftId: string }
+        try {
+          const { gifts } = await api<{ gifts: (SignRequest & { giftId: string })[] }>(
+            '/api/gifts',
+            { method: 'POST', body: { ...input, recipients: [recipient] } },
+          )
+          if (!gifts[0]) throw stopped()
+          gift = gifts[0]
+        } catch (error) {
+          throw stopped(error)
+        }
+        const result = await signAndSubmit(gift).catch((error: unknown) => {
+          throw stopped(error)
+        })
+        if (!result.ok) throw stopped()
+        sent.push(gift.giftId)
+      }
+      return sent
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: keys.gifts })
@@ -351,6 +390,8 @@ export function useCreateFundMutation() {
 /** Cash into a fund: what was spent, the fee, and what each part bought */
 export type FundCashRequest = SignRequest & {
   contribution: {
+    /** Shares sold for the cash first, when they came from outside the mix */
+    sold: { ticker: string; shares: number; cashRaw: string } | null
     spentRaw: string
     feeRaw: string
     buys: { ticker: string; cashRaw: string; shares: number }[]
@@ -370,12 +411,20 @@ export function useFundActionMutation(id: string) {
             amounts: { token: string; amountRaw: string }[]
             note: string | null
           }
-        | { action: 'contribute-cash'; cashRaw: string; note: string | null },
+        | { action: 'contribute-cash'; cashRaw: string; note: string | null }
+        | {
+            action: 'contribute-sell'
+            sell: { token: string; amountRaw: string }
+            note: string | null
+          },
     ) => {
-      if (input.action === 'contribute-cash') {
+      if (input.action === 'contribute-cash' || input.action === 'contribute-sell') {
         const request = await api<FundCashRequest>(`/api/funds/${id}/contribute-cash`, {
           method: 'POST',
-          body: { cashRaw: input.cashRaw, note: input.note },
+          body:
+            input.action === 'contribute-cash'
+              ? { cashRaw: input.cashRaw, note: input.note }
+              : { sell: input.sell, note: input.note },
         })
         const result = await signAndSubmit(request)
         if (!result.ok)

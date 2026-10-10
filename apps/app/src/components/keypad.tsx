@@ -15,14 +15,14 @@ export function pressKey(value: string, key: (typeof KEYS)[number]): string {
 /** Full-width number pad, the way amounts are typed everywhere (no form field) */
 export function Keypad({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <div className="grid grid-cols-3 gap-1 select-none">
+    <div className="grid grid-cols-3 gap-x-1 gap-y-3 select-none">
       {KEYS.map((key) => (
         <button
           key={key}
           type="button"
           onClick={() => onChange(pressKey(value, key))}
           aria-label={key === 'back' ? 'Delete' : key === '.' ? 'Decimal point' : key}
-          className="flex h-16 items-center justify-center rounded-2xl font-number text-2xl font-medium tabular-nums active:bg-muted"
+          className="flex h-16 items-center justify-center rounded-2xl font-number text-4xl font-semibold tabular-nums active:bg-muted"
         >
           {key === 'back' ? <BackspaceIcon className="size-6" /> : key}
         </button>
@@ -40,7 +40,7 @@ export function AmountDisplay({ value, hint }: { value: string; hint?: React.Rea
       <p className={`${size} font-number font-bold tracking-tight tabular-nums`} aria-live="polite">
         ${value}
       </p>
-      {hint && <p className="mt-2 text-sm text-muted-foreground">{hint}</p>}
+      {hint && <p className="mt-2 font-number text-sm text-muted-foreground">{hint}</p>}
     </div>
   )
 }
