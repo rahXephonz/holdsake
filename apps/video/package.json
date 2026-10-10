@@ -1,0 +1,22 @@
+{
+  "name": "@holdsake/video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "studio": "node --experimental-strip-types scripts/music.ts && remotion studio src/index.ts",
+    "music": "node --experimental-strip-types scripts/music.ts",
+    "render": "node --experimental-strip-types scripts/music.ts && remotion render src/index.ts Launch out/holdsake-launch.mp4",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.529",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.529"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "@types/react": "19.3.0",
+    "typescript": "6.0.3"
+  }
+}
