@@ -204,14 +204,17 @@ export default function EarnScreen() {
         )
       }
     >
-      {/* One number is the hero: the rate until there's money in, then the money */}
+      {/* The money is the hero, never the rate: a big rate reads as a promised return */}
       <section className="pt-8 pb-2 text-center">
         {empty ? (
           <>
-            <p className="font-number text-6xl font-bold tracking-tight tabular-nums">
-              {rate ?? '—'}
+            <p className="font-number text-5xl font-bold tracking-tight tabular-nums">
+              {formatUsd(0)}
             </p>
-            <p className="mt-2 text-muted-foreground">a year on your cash, paid in shares</p>
+            <p className="mx-auto mt-2 max-w-72 text-muted-foreground">
+              Your cash is lent to people borrowing against their shares. Interest comes as shares
+              and isn't guaranteed.
+            </p>
           </>
         ) : (
           <>
@@ -243,11 +246,9 @@ export default function EarnScreen() {
             <span className="font-sans text-sm font-normal text-muted-foreground">Change</span>
           }
         />
-        {empty ? (
-          <Estimate apy={data.apy} ticker={data.targetTicker} />
-        ) : (
+        <Fact label="Rate today" value={rate ? `${rate} a year, changes` : 'Changes'} />
+        {!empty && (
           <>
-            <Fact label="Rate" value={rate ? `${rate} a year` : 'Changes'} />
             {Number(data.claimedRaw) > 0 && (
               <Fact label="Claimed so far" value={formatUsd(cash(data.claimedRaw))} />
             )}
@@ -367,41 +368,6 @@ function InfoBadge() {
     </span>
   )
 }
-
-/** One sentence instead of a calculator card: tap an amount, read what it earns */
-function Estimate({ apy, ticker }: { apy: number | null; ticker: string }) {
-  const [amount, setAmount] = useState(1000)
-  if (apy === null) return null
-  return (
-    <div className="py-4">
-      <p className="text-muted-foreground">
-        <span className="font-number text-foreground tabular-nums">{formatUsd(amount)}</span> earns
-        about{' '}
-        <span className="font-number font-medium text-gain tabular-nums">
-          {formatUsd(amount * apy)}
-        </span>{' '}
-        of {ticker} a year
-      </p>
-      <div className="mt-3 flex gap-2">
-        {[100, 1000, 5000].map((option) => (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={amount === option}
-            onClick={() => setAmount(option)}
-            className={cn(
-              'h-9 rounded-full px-4 font-number text-sm font-medium tabular-nums transition-colors',
-              amount === option ? 'bg-foreground text-background' : 'bg-secondary',
-            )}
-          >
-            {formatUsd(option).replace('.00', '')}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function ReviewStep({
   action,
   data,
@@ -528,9 +494,7 @@ export function EarnHomeCard({ data }: { data: EarnView | undefined }) {
         <p className="text-sm text-muted-foreground">
           {value > 0
             ? `${formatUsd(interest)} of interest ready`
-            : data.apy === null
-              ? 'Your cash earns shares'
-              : `Cash earns about ${(data.apy * 100).toFixed(0)}% a year, paid in shares`}
+            : 'Lend your cash, get interest as shares'}
         </p>
       </div>
       <span
